@@ -45,7 +45,7 @@ class DocumentMetaclass(type):
             attrs['_meta'] = meta
             attrs['_meta']['abstract'] = False  # 789: EmbeddedDocument shouldn't inherit abstract
 
-        if attrs['_meta'].get('allow_inheritance', ALLOW_INHERITANCE):
+        if attrs['_meta'].get('allow_inheritance', ALLOW_INHERITANCE) is True:
             StringField = _import_class('StringField')
             attrs['_cls'] = StringField()
 
@@ -118,7 +118,7 @@ class DocumentMetaclass(type):
                 # inheritance of classes where inheritance is set to False
                 allow_inheritance = base._meta.get('allow_inheritance',
                                                    ALLOW_INHERITANCE)
-                if (allow_inheritance is not True and
+                if (allow_inheritance not in (True, 'formal') and
                         not base._meta.get('abstract')):
                     raise ValueError('Document %s may not be subclassed' %
                                      base.__name__)

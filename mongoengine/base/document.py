@@ -359,7 +359,7 @@ class BaseDocument(object):
 
         # Only add _cls if allow_inheritance is True
         if (not hasattr(self, '_meta') or
-                not self._meta.get('allow_inheritance', ALLOW_INHERITANCE)):
+                not self._meta.get('allow_inheritance', ALLOW_INHERITANCE) is True):
             data.pop('_cls')
 
         return data
