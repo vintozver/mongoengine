@@ -422,6 +422,20 @@ class BaseDocument(object):
         """Converts json data to an unsaved document instance"""
         return cls._from_son(json_util.loads(json_data), created=created)
 
+    @classmethod
+    def cls_by_son(cls, son):
+        """Return class for the bson.son.SON instance provided. Use `_cls` as a class name by default. Override to customize the instance creation (known children handling)"""
+        try:
+            class_name = son['_cls']
+        except KeyError:
+            class_name = cls._class_name
+
+        # Return correct subclass for document type
+        if class_name != cls._class_name:
+            cls = get_document(class_name)
+
+        return cls
+
     def __expand_dynamic_values(self, name, value):
         """expand any dynamic values to their correct types / values"""
         if not isinstance(value, (dict, list, tuple)):
@@ -675,17 +689,13 @@ class BaseDocument(object):
     def _from_son(cls, son, _auto_dereference=True, only_fields=None, created=False):
         """Create an instance of a Document (subclass) from a PyMongo SON.
         """
+
         if not only_fields:
             only_fields = []
 
-        # get the class name from the document, falling back to the given
-        # class if unavailable
-        class_name = son.get('_cls', cls._class_name)
-        data = dict(("%s" % key, value) for key, value in son.iteritems())
+        cls = cls.cls_by_son(son)
 
-        # Return correct subclass for document type
-        if class_name != cls._class_name:
-            cls = get_document(class_name)
+        data = dict(("%s" % key, value) for key, value in son.iteritems())
 
         changed_fields = []
         errors_dict = {}
