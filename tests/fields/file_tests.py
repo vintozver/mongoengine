@@ -314,16 +314,16 @@ class FileTest(unittest.TestCase):
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 1)
-        self.assertEquals(len(list(chunks)), 1)
+        self.assertEqual(len(list(files)), 1)
+        self.assertEqual(len(list(chunks)), 1)
 
         # Deleting the docoument should delete the files 
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         # Test case where we don't store a file in the first place 
         testfile = TestFile()
@@ -331,15 +331,15 @@ class FileTest(unittest.TestCase):
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         # Test case where we overwrite the file 
         testfile = TestFile()
@@ -352,15 +352,15 @@ class FileTest(unittest.TestCase):
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 1)
-        self.assertEquals(len(list(chunks)), 1)
+        self.assertEqual(len(list(files)), 1)
+        self.assertEqual(len(list(chunks)), 1)
         
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
 
     def test_image_field(self):
         if not HAS_PIL:

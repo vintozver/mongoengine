@@ -3105,7 +3105,7 @@ class InstanceTest(unittest.TestCase):
         p2.name = 'alon2'
         p2.save()
         p3 = Person.objects().only('created_on')[0]
-        self.assertEquals(orig_created_on, p3.created_on)
+        self.assertEqual(orig_created_on, p3.created_on)
 
         class Person(Document):
             created_on = DateTimeField(default=lambda: datetime.utcnow())
@@ -3114,18 +3114,18 @@ class InstanceTest(unittest.TestCase):
 
         p4 = Person.objects()[0]
         p4.save()
-        self.assertEquals(p4.height, 189)
-        self.assertEquals(Person.objects(height=189).count(), 1)
+        self.assertEqual(p4.height, 189)
+        self.assertEqual(Person.objects(height=189).count(), 1)
 
     def test_from_son(self):
         # 771
         class MyPerson(self.Person):
             meta = dict(shard_key=["id"])
         p = MyPerson.from_json('{"name": "name", "age": 27}', created=True)
-        self.assertEquals(p.id, None)
+        self.assertEqual(p.id, None)
         p.id = "12345"  # in case it is not working: "OperationError: Shard Keys are immutable..." will be raised here
         p = MyPerson._from_son({"name": "name", "age": 27}, created=True)
-        self.assertEquals(p.id, None)
+        self.assertEqual(p.id, None)
         p.id = "12345"  # in case it is not working: "OperationError: Shard Keys are immutable..." will be raised here
 
     def test_null_field(self):
@@ -3145,7 +3145,7 @@ class InstanceTest(unittest.TestCase):
         u_from_db = User.objects.get(name='user')
         u_from_db.height = None
         u_from_db.save()
-        self.assertEquals(u_from_db.height, None)
+        self.assertEqual(u_from_db.height, None)
         # 864
         self.assertEqual(u_from_db.str_fld, None)
         self.assertEqual(u_from_db.int_fld, None)
@@ -3159,7 +3159,7 @@ class InstanceTest(unittest.TestCase):
         u.save()
         User.objects(name='user').update_one(set__height=None, upsert=True)
         u_from_db = User.objects.get(name='user')
-        self.assertEquals(u_from_db.height, None)
+        self.assertEqual(u_from_db.height, None)
 
     def test_not_saved_eq(self):
         """Ensure we can compare documents not saved.

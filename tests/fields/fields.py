@@ -2401,7 +2401,7 @@ class FieldTest(unittest.TestCase):
         brother = Brother(name="Bob", sibling=sister)
         brother.save()
 
-        self.assertEquals(Brother.objects[0].sibling.name, sister.name)
+        self.assertEqual(Brother.objects[0].sibling.name, sister.name)
 
         Sister.drop_collection()
         Brother.drop_collection()
@@ -3606,8 +3606,8 @@ class FieldTest(unittest.TestCase):
         Dog().save()
         Fish().save()
         Human().save()
-        self.assertEquals(Animal.objects(_cls__in=["Animal.Mammal.Dog", "Animal.Fish"]).count(), 2)
-        self.assertEquals(Animal.objects(_cls__in=["Animal.Fish.Guppy"]).count(), 0)
+        self.assertEqual(Animal.objects(_cls__in=["Animal.Mammal.Dog", "Animal.Fish"]).count(), 2)
+        self.assertEqual(Animal.objects(_cls__in=["Animal.Fish.Guppy"]).count(), 0)
 
     def test_sparse_field(self):
         class Doc(Document):
