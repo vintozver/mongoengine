@@ -12,6 +12,7 @@ import uuid
 import math
 import itertools
 import re
+import six
 
 try:
     import dateutil
@@ -21,6 +22,10 @@ except ImportError:
 from decimal import Decimal
 
 from bson import Binary, DBRef, ObjectId
+try:
+    from bson.int64 import Int64
+except ImportError:
+    Int64 = long
 
 from mongoengine import *
 from mongoengine.connection import get_db
@@ -1155,6 +1160,19 @@ class FieldTest(unittest.TestCase):
         simple = simple.reload()
         self.assertEqual(simple.widgets, [4])
 
+    def test_list_field_with_negative_indices(self):
+        
+        class Simple(Document):
+            widgets = ListField()
+
+        simple = Simple(widgets=[1, 2, 3, 4]).save()
+        simple.widgets[-1] = 5
+        self.assertEqual(['widgets.3'], simple._changed_fields)
+        simple.save()
+
+        simple = simple.reload()
+        self.assertEqual(simple.widgets, [1, 2, 3, 5])
+
     def test_list_field_complex(self):
         """Ensure that the list fields can handle the complex types."""
 
@@ -1533,6 +1551,29 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(1, Log.objects(
             actions__friends__operation='drink',
             actions__friends__object='beer').count())
+
+    def test_map_field_unicode(self):
+
+        class Info(EmbeddedDocument):
+            description = StringField()
+            value_list = ListField(field=StringField())
+
+        class BlogPost(Document):
+            info_dict = MapField(field=EmbeddedDocumentField(Info))
+
+        BlogPost.drop_collection()
+
+        tree = BlogPost(info_dict={
+            u"éééé": {
+                'description': u"VALUE: éééé"
+            }
+        })
+
+        tree.save()
+
+        self.assertEqual(BlogPost.objects.get(id=tree.id).info_dict[u"éééé"].description, u"VALUE: éééé")
+
+        BlogPost.drop_collection()
 
     def test_embedded_db_field(self):
 
@@ -3605,6 +3646,19 @@ class FieldTest(unittest.TestCase):
 
         self.assertRaises(FieldDoesNotExist, test)
 
+    def test_long_field_is_considered_as_int64(self):
+        """
+        Tests that long fields are stored as long in mongo, even if long value
+        is small enough to be an int.
+        """
+        class TestLongFieldConsideredAsInt64(Document):
+            some_long = LongField()
+
+        doc = TestLongFieldConsideredAsInt64(some_long=42).save()
+        db = get_db()
+        self.assertTrue(isinstance(db.test_long_field_considered_as_int64.find()[0]['some_long'], Int64))
+        self.assertTrue(isinstance(doc.some_long, six.integer_types))
+
 
 class EmbeddedDocumentListFieldTestCase(unittest.TestCase):
 
@@ -3991,6 +4045,17 @@ class EmbeddedDocumentListFieldTestCase(unittest.TestCase):
         # Ensure the method returned 2 as the number of entries
         # modified
         self.assertEqual(number, 2)
+
+    def test_unicode(self):
+        """
+        Tests that unicode strings handled correctly
+        """
+        post = self.BlogPost(comments=[
+            self.Comments(author='user1', message=u'сообщение'),
+            self.Comments(author='user2', message=u'хабарлама')
+        ]).save()
+        self.assertEqual(post.comments.get(message=u'сообщение').author,
+                         'user1')
 
     def test_save(self):
         """
