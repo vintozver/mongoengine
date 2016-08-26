@@ -232,7 +232,7 @@ used to access the documents in the database collection associated with that
 class. So let's see how we can get our posts' titles::
 
     for post in Post.objects:
-        print post.title
+        print(post.title)
 
 Retrieving type-specific information
 ------------------------------------
@@ -242,7 +242,7 @@ to access the type-specific data (link_url, content, etc.)? One way is simply
 to use the :attr:`objects` attribute of a subclass of :class:`Post`::
 
     for post in TextPost.objects:
-        print post.content
+        print(post.content)
 
 Using TextPost's :attr:`objects` attribute only returns documents that were
 created using :class:`TextPost`. Actually, there is a more general rule here:
@@ -259,16 +259,16 @@ instances of :class:`Post` --- they were instances of the subclass of
 practice::
 
     for post in Post.objects:
-        print post.title
-        print '=' * len(post.title)
+        print(post.title)
+        print('=' * len(post.title))
 
         if isinstance(post, TextPost):
-            print post.content
+            print(post.content)
 
         if isinstance(post, LinkPost):
-            print 'Link:', post.link_url
+            print('Link:', post.link_url)
 
-        print
+        print()
 
 This would print the title of each post, followed by the content if it was a
 text post, and "Link: <url>" if it was a link post.
@@ -283,7 +283,7 @@ your query.  Let's adjust our query so that only posts with the tag "mongodb"
 are returned::
 
     for post in Post.objects(tags='mongodb'):
-        print post.title
+        print(post.title)
 
 There are also methods available on :class:`~mongoengine.queryset.QuerySet`
 objects that allow different results to be returned, for example, calling
@@ -292,7 +292,7 @@ the first matched by the query you provide. Aggregation functions may also be
 used on :class:`~mongoengine.queryset.QuerySet` objects::
 
     num_posts = Post.objects(tags='mongodb').count()
-    print 'Found %d posts with tag "mongodb"' % num_posts
+    print('Found %d posts with tag "mongodb"' % num_posts)
 
 Learning more about mongoengine
 -------------------------------

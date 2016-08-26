@@ -118,7 +118,7 @@ class QuerySetTest(unittest.TestCase):
         self.assertEqual(people.count(), 2)
         results = list(people)
         self.assertTrue(isinstance(results[0], self.Person))
-        self.assertTrue(isinstance(results[0].id, (ObjectId, str, unicode)))
+        self.assertTrue(isinstance(results[0].id, (ObjectId, str)))
         self.assertEqual(results[0].name, "User A")
         self.assertEqual(results[0].age, 20)
         self.assertEqual(results[1].name, "User B")
@@ -179,7 +179,7 @@ class QuerySetTest(unittest.TestCase):
 
         # Test larger slice __repr__
         self.Person.objects.delete()
-        for i in xrange(55):
+        for i in range(55):
             self.Person(name='A%s' % i, age=i).save()
 
         self.assertEqual(self.Person.objects.count(), 55)
@@ -776,7 +776,7 @@ class QuerySetTest(unittest.TestCase):
             post2 = Post(comments=[comment2, comment2])
 
             blogs = []
-            for i in xrange(1, 100):
+            for i in range(1, 100):
                 blogs.append(Blog(title="post %s" % i, posts=[post1, post2]))
 
             Blog.objects.insert(blogs, load_bulk=False)
@@ -996,7 +996,7 @@ class QuerySetTest(unittest.TestCase):
 
         Doc.drop_collection()
 
-        for i in xrange(1000):
+        for i in range(1000):
             Doc(number=i).save()
 
         docs = Doc.objects.order_by('number')
@@ -1145,7 +1145,7 @@ class QuerySetTest(unittest.TestCase):
         qs = list(qs)
         expected = list(expected)
         self.assertEqual(len(qs), len(expected))
-        for i in xrange(len(qs)):
+        for i in range(len(qs)):
             self.assertEqual(qs[i], expected[i])
 
     def test_ordering(self):
@@ -1199,12 +1199,12 @@ class QuerySetTest(unittest.TestCase):
             BlogPost.objects.filter(title='whatever').first()
             self.assertEqual(len(q.get_ops()), 1)
             self.assertEqual(
-                q.get_ops()[0]['query']['$orderby'], {u'published_date': -1})
+                q.get_ops()[0]['query']['$orderby'], {'published_date': -1})
 
         with db_ops_tracker() as q:
             BlogPost.objects.filter(title='whatever').order_by().first()
             self.assertEqual(len(q.get_ops()), 1)
-            print q.get_ops()[0]['query']
+            print(q.get_ops()[0]['query'])
             self.assertFalse('$orderby' in q.get_ops()[0]['query'])
 
     def test_no_ordering_for_get(self):
@@ -1352,9 +1352,9 @@ class QuerySetTest(unittest.TestCase):
 
         results = BlogPost.objects.exec_js(code)
         expected_results = [
-            {u'comment': u'cool', u'document': u'post1'},
-            {u'comment': u'yay', u'document': u'post1'},
-            {u'comment': u'nice stuff', u'document': u'post2'},
+            {'comment': 'cool', 'document': 'post1'},
+            {'comment': 'yay', 'document': 'post1'},
+            {'comment': 'nice stuff', 'document': 'post2'},
         ]
         self.assertEqual(results, expected_results)
 
@@ -1661,7 +1661,7 @@ class QuerySetTest(unittest.TestCase):
 
         Log.drop_collection()
 
-        for i in xrange(10):
+        for i in range(10):
             Log().save()
 
         Log.objects()[3:5].delete()
@@ -1846,7 +1846,7 @@ class QuerySetTest(unittest.TestCase):
         class Collaborator(EmbeddedDocument):
             user = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return '%s' % self.user
 
         class Site(Document):
@@ -1872,7 +1872,7 @@ class QuerySetTest(unittest.TestCase):
         class User(EmbeddedDocument):
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return '%s' % self.name
 
         class Collaborator(EmbeddedDocument):
@@ -1908,7 +1908,7 @@ class QuerySetTest(unittest.TestCase):
         class Collaborator(EmbeddedDocument):
             user = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return '%s' % self.user
 
         class Site(Document):
@@ -2303,10 +2303,10 @@ class QuerySetTest(unittest.TestCase):
         f1.save()
 
         # persons of first family
-        Person(id=1, family=f1, name=u"Wilson Jr", age=21).save()
-        Person(id=2, family=f1, name=u"Wilson Father", age=45).save()
-        Person(id=3, family=f1, name=u"Eliana Costa", age=40).save()
-        Person(id=4, family=f1, name=u"Tayza Mariana", age=17).save()
+        Person(id=1, family=f1, name="Wilson Jr", age=21).save()
+        Person(id=2, family=f1, name="Wilson Father", age=45).save()
+        Person(id=3, family=f1, name="Eliana Costa", age=40).save()
+        Person(id=4, family=f1, name="Tayza Mariana", age=17).save()
 
         # creating second family
         f2 = Family(id=2, log="Av prof frasc brunno")
@@ -2383,10 +2383,10 @@ class QuerySetTest(unittest.TestCase):
                 '_id': 1,
                 'value': {
                     'persons': [
-                        {'age': 21, 'name': u'Wilson Jr'},
-                        {'age': 45, 'name': u'Wilson Father'},
-                        {'age': 40, 'name': u'Eliana Costa'},
-                        {'age': 17, 'name': u'Tayza Mariana'}],
+                        {'age': 21, 'name': 'Wilson Jr'},
+                        {'age': 45, 'name': 'Wilson Father'},
+                        {'age': 40, 'name': 'Eliana Costa'},
+                        {'age': 17, 'name': 'Tayza Mariana'}],
                     'totalAge': 123}
             })
 
@@ -2395,9 +2395,9 @@ class QuerySetTest(unittest.TestCase):
                 '_id': 2,
                 'value': {
                     'persons': [
-                        {'age': 16, 'name': u'Isabella Luanna'},
-                        {'age': 36, 'name': u'Sandra Mara'},
-                        {'age': 10, 'name': u'Igor Gabriel'}],
+                        {'age': 16, 'name': 'Isabella Luanna'},
+                        {'age': 36, 'name': 'Sandra Mara'},
+                        {'age': 10, 'name': 'Igor Gabriel'}],
                     'totalAge': 62}
             })
 
@@ -2406,8 +2406,8 @@ class QuerySetTest(unittest.TestCase):
                 '_id': 3,
                 'value': {
                     'persons': [
-                        {'age': 30, 'name': u'Arthur WA'},
-                        {'age': 25, 'name': u'Paula Leonel'}],
+                        {'age': 30, 'name': 'Arthur WA'},
+                        {'age': 25, 'name': 'Paula Leonel'}],
                     'totalAge': 55}
             })
 
@@ -2701,10 +2701,10 @@ class QuerySetTest(unittest.TestCase):
         p.save()
 
         ot = Person.objects.item_frequencies('extra.tag', map_reduce=False)
-        self.assertEqual(ot, {None: 1.0, u'friend': 1.0})
+        self.assertEqual(ot, {None: 1.0, 'friend': 1.0})
 
         ot = Person.objects.item_frequencies('extra.tag', map_reduce=True)
-        self.assertEqual(ot, {None: 1.0, u'friend': 1.0})
+        self.assertEqual(ot, {None: 1.0, 'friend': 1.0})
 
     def test_item_frequencies_with_0_values(self):
         class Test(Document):
@@ -2740,10 +2740,10 @@ class QuerySetTest(unittest.TestCase):
 
         Test.drop_collection()
 
-        for i in xrange(50):
+        for i in range(50):
             Test(val=1).save()
 
-        for i in xrange(20):
+        for i in range(20):
             Test(val=2).save()
 
         freqs = Test.objects.item_frequencies(
@@ -2989,8 +2989,8 @@ class QuerySetTest(unittest.TestCase):
 
         self.assertEqual(count, 1)
 
-        News(title=u"As eleições no Brasil já estão em planejamento",
-             content=u"A candidata dilma roussef já começa o teu planejamento",
+        News(title="As eleições no Brasil já estão em planejamento",
+             content="A candidata dilma roussef já começa o teu planejamento",
              is_active=False).save()
 
         new = News.objects(is_active=False).search_text(
@@ -3510,7 +3510,7 @@ class QuerySetTest(unittest.TestCase):
 
         Post.drop_collection()
 
-        for i in xrange(10):
+        for i in range(10):
             Post(title="Post %s" % i).save()
 
         self.assertEqual(5, Post.objects.limit(5).skip(5).count(with_limit_and_skip=True))
@@ -3525,7 +3525,7 @@ class QuerySetTest(unittest.TestCase):
             pass
 
         MyDoc.drop_collection()
-        for i in xrange(0, 10):
+        for i in range(0, 10):
             MyDoc().save()
 
         self.assertEqual(MyDoc.objects.count(), 10)
@@ -3581,7 +3581,7 @@ class QuerySetTest(unittest.TestCase):
 
         Number.drop_collection()
 
-        for i in xrange(1, 101):
+        for i in range(1, 101):
             t = Number(n=i)
             t.save()
 
@@ -3793,18 +3793,18 @@ class QuerySetTest(unittest.TestCase):
         ulist = list(UserDoc.objects.scalar('name', 'age'))
 
         self.assertEqual(ulist, [
-            (u'Wilson Jr', 19),
-            (u'Wilson', 43),
-            (u'Eliana', 37),
-            (u'Tayza', 15)])
+            ('Wilson Jr', 19),
+            ('Wilson', 43),
+            ('Eliana', 37),
+            ('Tayza', 15)])
 
         ulist = list(UserDoc.objects.scalar('name').order_by('age'))
 
         self.assertEqual(ulist, [
-            (u'Tayza'),
-            (u'Wilson Jr'),
-            (u'Eliana'),
-            (u'Wilson')])
+            ('Tayza'),
+            ('Wilson Jr'),
+            ('Eliana'),
+            ('Wilson')])
 
     def test_scalar_embedded(self):
         class Profile(EmbeddedDocument):
@@ -3836,15 +3836,15 @@ class QuerySetTest(unittest.TestCase):
         self.assertEqual(
             list(Person.objects.order_by(
                 'profile__age').scalar('profile__name')),
-            [u'Wilson Jr', u'Gabriel Falcao', u'Lincoln de souza', u'Walter cruz'])
+            ['Wilson Jr', 'Gabriel Falcao', 'Lincoln de souza', 'Walter cruz'])
 
         ulist = list(Person.objects.order_by('locale.city')
                      .scalar('profile__name', 'profile__age', 'locale__city'))
         self.assertEqual(ulist,
-                         [(u'Lincoln de souza', 28, u'Belo Horizonte'),
-                          (u'Walter cruz', 30, u'Brasilia'),
-                          (u'Wilson Jr', 19, u'Corumba-GO'),
-                          (u'Gabriel Falcao', 23, u'New York')])
+                         [('Lincoln de souza', 28, 'Belo Horizonte'),
+                          ('Walter cruz', 30, 'Brasilia'),
+                          ('Wilson Jr', 19, 'Corumba-GO'),
+                          ('Gabriel Falcao', 23, 'New York')])
 
     def test_scalar_decimal(self):
         from decimal import Decimal
@@ -3857,7 +3857,7 @@ class QuerySetTest(unittest.TestCase):
         Person(name="Wilson Jr", rating=Decimal('1.0')).save()
 
         ulist = list(Person.objects.scalar('name', 'rating'))
-        self.assertEqual(ulist, [(u'Wilson Jr', Decimal('1.0'))])
+        self.assertEqual(ulist, [('Wilson Jr', Decimal('1.0'))])
 
     def test_scalar_reference_field(self):
         class State(Document):
@@ -3876,7 +3876,7 @@ class QuerySetTest(unittest.TestCase):
         Person(name="Wilson JR", state=s1).save()
 
         plist = list(Person.objects.scalar('name', 'state'))
-        self.assertEqual(plist, [(u'Wilson JR', s1)])
+        self.assertEqual(plist, [('Wilson JR', s1)])
 
     def test_scalar_generic_reference_field(self):
         class State(Document):
@@ -3895,7 +3895,7 @@ class QuerySetTest(unittest.TestCase):
         Person(name="Wilson JR", state=s1).save()
 
         plist = list(Person.objects.scalar('name', 'state'))
-        self.assertEqual(plist, [(u'Wilson JR', s1)])
+        self.assertEqual(plist, [('Wilson JR', s1)])
 
     def test_scalar_db_field(self):
 
@@ -3988,7 +3988,7 @@ class QuerySetTest(unittest.TestCase):
 
         # Test larger slice __repr__
         self.Person.objects.delete()
-        for i in xrange(55):
+        for i in range(55):
             self.Person(name='A%s' % i, age=i).save()
 
         self.assertEqual(self.Person.objects.scalar('name').count(), 55)
@@ -4002,9 +4002,9 @@ class QuerySetTest(unittest.TestCase):
             self.assertEqual("['A51', 'A52']",  "%s" % self.Person.objects.order_by(
                 'age').scalar('name')[51:53])
         else:
-            self.assertEqual("[u'A1', u'A2']",  "%s" % self.Person.objects.order_by(
+            self.assertEqual("['A1', 'A2']",  "%s" % self.Person.objects.order_by(
                 'age').scalar('name')[1:3])
-            self.assertEqual("[u'A51', u'A52']",  "%s" % self.Person.objects.order_by(
+            self.assertEqual("['A51', 'A52']",  "%s" % self.Person.objects.order_by(
                 'age').scalar('name')[51:53])
 
         # with_id and in_bulk
@@ -4017,7 +4017,7 @@ class QuerySetTest(unittest.TestCase):
             self.assertEqual("['A1', 'A2']",  "%s" % sorted(
                 self.Person.objects.scalar('name').in_bulk(list(pks)).values()))
         else:
-            self.assertEqual("[u'A1', u'A2']",  "%s" % sorted(
+            self.assertEqual("['A1', 'A2']",  "%s" % sorted(
                 self.Person.objects.scalar('name').in_bulk(list(pks)).values()))
 
     def test_elem_match(self):
@@ -4370,7 +4370,7 @@ class QuerySetTest(unittest.TestCase):
             name = StringField()
 
         Person.drop_collection()
-        for i in xrange(100):
+        for i in range(100):
             Person(name="No: %s" % i).save()
 
         with query_counter() as q:
@@ -4401,7 +4401,7 @@ class QuerySetTest(unittest.TestCase):
             name = StringField()
 
         Person.drop_collection()
-        for i in xrange(100):
+        for i in range(100):
             Person(name="No: %s" % i).save()
 
         with query_counter() as q:
@@ -4422,7 +4422,7 @@ class QuerySetTest(unittest.TestCase):
         class User(Document):
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
         User.drop_collection()
@@ -4445,7 +4445,7 @@ class QuerySetTest(unittest.TestCase):
             fields = DictField()
 
         Noddy.drop_collection()
-        for i in xrange(100):
+        for i in range(100):
             noddy = Noddy()
             for j in range(20):
                 noddy.fields["key" + str(j)] = "value " + str(j)
@@ -4473,7 +4473,7 @@ class QuerySetTest(unittest.TestCase):
         class User(Document):
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
         User.drop_collection()
@@ -4647,7 +4647,7 @@ class QuerySetTest(unittest.TestCase):
             name = StringField()
 
         Person.drop_collection()
-        for i in xrange(100):
+        for i in range(100):
             Person(name="No: %s" % i).save()
 
         with query_counter() as q:
@@ -4771,10 +4771,10 @@ class QuerySetTest(unittest.TestCase):
         ])
 
     def test_delete_count(self):
-        [self.Person(name="User {0}".format(i), age=i * 10).save() for i in xrange(1, 4)]
+        [self.Person(name="User {0}".format(i), age=i * 10).save() for i in range(1, 4)]
         self.assertEqual(self.Person.objects().delete(), 3)  # test ordinary QuerySey delete count
 
-        [self.Person(name="User {0}".format(i), age=i * 10).save() for i in xrange(1, 4)]
+        [self.Person(name="User {0}".format(i), age=i * 10).save() for i in range(1, 4)]
 
         self.assertEqual(self.Person.objects().skip(1).delete(), 2)  # test Document delete with existing documents
 

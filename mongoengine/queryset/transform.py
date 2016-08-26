@@ -66,7 +66,7 @@ def query(_doc_cls=None, **kwargs):
             cleaned_fields = []
             for field in fields:
                 append_field = True
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     parts.append(field)
                     append_field = False
                 # is last and CachedReferenceField
@@ -84,9 +84,9 @@ def query(_doc_cls=None, **kwargs):
             singular_ops = [None, 'ne', 'gt', 'gte', 'lt', 'lte', 'not']
             singular_ops += STRING_OPERATORS
             if op in singular_ops:
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     if (op in STRING_OPERATORS and
-                            isinstance(value, basestring)):
+                            isinstance(value, str)):
                         StringField = _import_class('StringField')
                         value = StringField.prepare_query_value(op, value)
                     else:
@@ -224,7 +224,7 @@ def update(_doc_cls=None, **update):
             appended_sub_field = False
             for field in fields:
                 append_field = True
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     # Convert the S operator to $
                     if field == 'S':
                         field = '$'

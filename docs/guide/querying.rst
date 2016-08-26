@@ -11,7 +11,7 @@ fetch documents from the database::
 
     # Prints out the names of all the users in the database
     for user in User.objects:
-        print user.name
+        print(user.name)
 
 .. note::
 

@@ -88,7 +88,7 @@ class QuerySet(BaseQuerySet):
             self._result_cache = []
         if self._has_more:
             try:
-                for i in xrange(ITER_CHUNK_SIZE):
+                for i in range(ITER_CHUNK_SIZE):
                     self._result_cache.append(self.next())
             except StopIteration:
                 self._has_more = False
@@ -137,7 +137,7 @@ class QuerySetNoCache(BaseQuerySet):
             return '.. queryset mid-iteration ..'
 
         data = []
-        for i in xrange(REPR_OUTPUT_SIZE + 1):
+        for i in range(REPR_OUTPUT_SIZE + 1):
             try:
                 data.append(self.next())
             except StopIteration:

@@ -117,7 +117,7 @@ class ValidationError(AssertionError):
             elif isinstance(source, ValidationError) and source.errors:
                 return build_dict(source.errors)
             else:
-                return unicode(source)
+                return str(source)
             return errors_dict
 
         if not self.errors:

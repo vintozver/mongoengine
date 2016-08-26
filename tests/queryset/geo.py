@@ -27,7 +27,7 @@ class GeoQueriesTest(unittest.TestCase):
             date = DateTimeField()
             location = GeoPointField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
         Event.drop_collection()
@@ -235,7 +235,7 @@ class GeoQueriesTest(unittest.TestCase):
             date = DateTimeField()
             location = PointField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
         Event.drop_collection()

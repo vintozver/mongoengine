@@ -187,11 +187,11 @@ class BaseField(object):
         if isinstance(value, (Document, EmbeddedDocument)):
             if not any(isinstance(value, c) for c in choice_list):
                 self.error(
-                    'Value must be instance of %s' % unicode(choice_list)
+                    'Value must be instance of %s' % str(choice_list)
                 )
         # Choices which are types other than Documents
         elif value not in choice_list:
-            self.error('Value must be one of %s' % unicode(choice_list))
+            self.error('Value must be one of %s' % str(choice_list))
 
 
     def _validate(self, value, **kwargs):
@@ -285,7 +285,7 @@ class ComplexBaseField(BaseField):
     def to_python(self, value):
         """Convert a MongoDB-compatible type to a Python type.
         """
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value
 
         if hasattr(value, 'to_python'):
@@ -331,7 +331,7 @@ class ComplexBaseField(BaseField):
         EmbeddedDocument = _import_class("EmbeddedDocument")
         GenericReferenceField = _import_class("GenericReferenceField")
 
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return value
 
         if hasattr(value, 'to_mongo'):
@@ -447,10 +447,10 @@ class ObjectIdField(BaseField):
     def to_mongo(self, value, **kwargs):
         if not isinstance(value, ObjectId):
             try:
-                return ObjectId(unicode(value))
+                return ObjectId(str(value))
             except Exception, e:
                 # e.message attribute has been deprecated since Python 2.6
-                self.error(unicode(e))
+                self.error(str(e))
         return value
 
     def prepare_query_value(self, op, value):
@@ -458,7 +458,7 @@ class ObjectIdField(BaseField):
 
     def validate(self, value):
         try:
-            ObjectId(unicode(value))
+            ObjectId(str(value))
         except Exception:
             self.error('Invalid Object ID')
 

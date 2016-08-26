@@ -4,10 +4,7 @@ from pymongo.errors import OperationFailure
 
 sys.path[0:0] = [""]
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 from nose.plugins.skip import SkipTest
 
 import pymongo

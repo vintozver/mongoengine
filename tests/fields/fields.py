@@ -208,7 +208,7 @@ class FieldTest(unittest.TestCase):
         HandleNoneFields.drop_collection()
 
         doc = HandleNoneFields()
-        doc.str_fld = u'spam ham egg'
+        doc.str_fld = 'spam ham egg'
         doc.int_fld = 42
         doc.flt_fld = 4.2
         doc.com_dt_fld = datetime.datetime.utcnow()
@@ -244,7 +244,7 @@ class FieldTest(unittest.TestCase):
         HandleNoneFields.drop_collection()
 
         doc = HandleNoneFields()
-        doc.str_fld = u'spam ham egg'
+        doc.str_fld = 'spam ham egg'
         doc.int_fld = 42
         doc.flt_fld = 4.2
         doc.com_dt_fld = datetime.datetime.utcnow()
@@ -639,8 +639,8 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond and
         # dropped
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
-        d2 = datetime.datetime(1970, 01, 01, 00, 00, 01)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
+        d2 = datetime.datetime(1970, 1, 1, 0, 0, 1)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -649,8 +649,8 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(log.date, d2)
 
         # Post UTC - microseconds are rounded (down) nearest millisecond
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9999)
-        d2 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9000)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9999)
+        d2 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9000)
         log.date = d1
         log.save()
         log.reload()
@@ -677,7 +677,7 @@ class FieldTest(unittest.TestCase):
 
         LogEntry.drop_collection()
 
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1)
         log = LogEntry()
         log.date = d1
         log.validate()
@@ -694,8 +694,8 @@ class FieldTest(unittest.TestCase):
         LogEntry.drop_collection()
 
         # create 60 log entries
-        for i in xrange(1950, 2010):
-            d = datetime.datetime(i, 01, 01, 00, 00, 01)
+        for i in range(1950, 2010):
+            d = datetime.datetime(i, 1, 1, 0, 0, 1)
             LogEntry(date=d).save()
 
         self.assertEqual(LogEntry.objects.count(), 60)
@@ -742,7 +742,7 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond and
         # dropped - with default datetimefields
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -751,7 +751,7 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond - with
         # default datetimefields
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9999)
         log.date = d1
         log.save()
         log.reload()
@@ -768,7 +768,7 @@ class FieldTest(unittest.TestCase):
         # Pre UTC microseconds above 1000 is wonky - with default datetimefields
         # log.date has an invalid microsecond value so I can't construct
         # a date to compare.
-        for i in xrange(1001, 3113, 33):
+        for i in range(1001, 3113, 33):
             d1 = datetime.datetime(1969, 12, 31, 23, 59, 59, i)
             log.date = d1
             log.save()
@@ -778,7 +778,7 @@ class FieldTest(unittest.TestCase):
             self.assertEqual(log, log1)
 
         # Test string padding
-        microsecond = map(int, [math.pow(10, x) for x in xrange(6)])
+        microsecond = map(int, [math.pow(10, x) for x in range(6)])
         mm = dd = hh = ii = ss = [1, 10]
 
         for values in itertools.product([2014], mm, dd, hh, ii, ss, microsecond):
@@ -800,7 +800,7 @@ class FieldTest(unittest.TestCase):
 
         LogEntry.drop_collection()
 
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -811,8 +811,8 @@ class FieldTest(unittest.TestCase):
         LogEntry.drop_collection()
 
         # create 60 log entries
-        for i in xrange(1950, 2010):
-            d = datetime.datetime(i, 01, 01, 00, 00, 01, 999)
+        for i in range(1950, 2010):
+            d = datetime.datetime(i, 1, 1, 0, 0, 1, 999)
             LogEntry(date=d).save()
 
         self.assertEqual(LogEntry.objects.count(), 60)
@@ -1552,7 +1552,7 @@ class FieldTest(unittest.TestCase):
             actions__friends__operation='drink',
             actions__friends__object='beer').count())
 
-    def test_map_field_unicode(self):
+    def test_map_field_str(self):
 
         class Info(EmbeddedDocument):
             description = StringField()
@@ -1564,14 +1564,14 @@ class FieldTest(unittest.TestCase):
         BlogPost.drop_collection()
 
         tree = BlogPost(info_dict={
-            u"éééé": {
-                'description': u"VALUE: éééé"
+            "éééé": {
+                'description': "VALUE: éééé"
             }
         })
 
         tree.save()
 
-        self.assertEqual(BlogPost.objects.get(id=tree.id).info_dict[u"éééé"].description, u"VALUE: éééé")
+        self.assertEqual(BlogPost.objects.get(id=tree.id).info_dict["éééé"].description, "VALUE: éééé")
 
         BlogPost.drop_collection()
 
@@ -1915,11 +1915,11 @@ class FieldTest(unittest.TestCase):
 
         self.assertEqual(dict(a2.to_mongo()), {
             "_id": a2.pk,
-            "name": u"Wilson Junior",
-            "tp": u"pf",
+            "name": "Wilson Junior",
+            "tp": "pf",
             "father": {
                 "_id": a1.pk,
-                "tp": u"pj"
+                "tp": "pj"
             }
         })
 
@@ -1934,11 +1934,11 @@ class FieldTest(unittest.TestCase):
         a2.reload()
         self.assertEqual(dict(a2.to_mongo()), {
             "_id": a2.pk,
-            "name": u"Wilson Junior",
-            "tp": u"pf",
+            "name": "Wilson Junior",
+            "tp": "pf",
             "father": {
                 "_id": a1.pk,
-                "tp": u"pf"
+                "tp": "pf"
             }
         })
 
@@ -3002,8 +3002,8 @@ class FieldTest(unittest.TestCase):
         """
         SIZES = ('S', 'M', 'L', 'XL', 'XXL')
         COLORS = (('R', 'Red'), ('B', 'Blue'))
-        SIZE_MESSAGE = u"Value must be one of ('S', 'M', 'L', 'XL', 'XXL')"
-        COLOR_MESSAGE = u"Value must be one of ['R', 'B']"
+        SIZE_MESSAGE = "Value must be one of ('S', 'M', 'L', 'XL', 'XXL')"
+        COLOR_MESSAGE = "Value must be one of ['R', 'B']"
 
         class Shirt(Document):
             size = StringField(max_length=3, choices=SIZES)
@@ -3052,7 +3052,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
@@ -3076,7 +3076,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         self.assertEqual(Person.id.get_next_value(), 11)
@@ -3091,7 +3091,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         self.assertEqual(Person.id.get_next_value(), '11')
@@ -3107,7 +3107,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'jelly.id'})
@@ -3132,7 +3132,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
@@ -3194,7 +3194,7 @@ class FieldTest(unittest.TestCase):
         Animal.drop_collection()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Animal(name="Animal %s" % x).save()
             Person(name="Person %s" % x).save()
 
@@ -3224,7 +3224,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             p = Person(name="Person %s" % x)
             p.save()
 
@@ -3427,7 +3427,7 @@ class FieldTest(unittest.TestCase):
             self.assertTrue(1 in error_dict['comments'])
             self.assertTrue('content' in error_dict['comments'][1])
             self.assertEqual(error_dict['comments'][1]['content'],
-                             u'Field is required')
+                             'Field is required')
 
         post.comments[1].content = 'here we go'
         post.validate()
@@ -4046,15 +4046,15 @@ class EmbeddedDocumentListFieldTestCase(unittest.TestCase):
         # modified
         self.assertEqual(number, 2)
 
-    def test_unicode(self):
+    def test_str(self):
         """
-        Tests that unicode strings handled correctly
+        Tests that strings handled correctly
         """
         post = self.BlogPost(comments=[
-            self.Comments(author='user1', message=u'сообщение'),
-            self.Comments(author='user2', message=u'хабарлама')
+            self.Comments(author='user1', message='сообщение'),
+            self.Comments(author='user2', message='хабарлама')
         ]).save()
-        self.assertEqual(post.comments.get(message=u'сообщение').author,
+        self.assertEqual(post.comments.get(message='сообщение').author,
                          'user1')
 
     def test_save(self):

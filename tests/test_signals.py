@@ -29,7 +29,7 @@ class SignalTests(unittest.TestCase):
             id = SequenceField(primary_key=True)
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
             @classmethod
@@ -99,7 +99,7 @@ class SignalTests(unittest.TestCase):
 
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
             @classmethod
@@ -134,7 +134,7 @@ class SignalTests(unittest.TestCase):
             content = StringField()
             active = BooleanField(default=False)
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
             @classmethod

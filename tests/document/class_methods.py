@@ -230,7 +230,7 @@ class ClassMethodsTest(unittest.TestCase):
         self.assertEqual(BlogPost.list_indexes(),
                          [[('_cls', 1), ('author', 1), ('tags', 1)],
                          [('_cls', 1), ('author', 1), ('tags', 1), ('extra_text', 1)],
-                         [(u'_id', 1)], [('_cls', 1)]])
+                         [('_id', 1)], [('_cls', 1)]])
 
     def test_register_delete_rule_inherited(self):
 

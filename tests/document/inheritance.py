@@ -221,7 +221,7 @@ class InheritanceTest(unittest.TestCase):
 
         self.assertEqual(
             sorted([idx['key'] for idx in C._get_collection().index_information().values()]),
-            sorted([[(u'_cls', 1), (u'b', 1)], [(u'_id', 1)], [(u'_cls', 1), (u'a', 1)]])
+            sorted([[('_cls', 1), ('b', 1)], [('_id', 1)], [('_cls', 1), ('a', 1)]])
         )
 
     def test_polymorphic_queries(self):

@@ -178,15 +178,15 @@ class InstanceTest(unittest.TestCase):
         Log.drop_collection()
 
     def test_repr(self):
-        """Ensure that unicode representation works
+        """Ensure that str representation works
         """
         class Article(Document):
             title = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
-        doc = Article(title=u'привет мир')
+        doc = Article(title='привет мир')
 
         self.assertEqual('<Article: привет мир>', repr(doc))
 
@@ -199,7 +199,7 @@ class InstanceTest(unittest.TestCase):
             def __str__(self):
                 return None
 
-        doc = Article(title=u'привет мир')
+        doc = Article(title='привет мир')
 
         self.assertEqual('<Article: None>', repr(doc))
 
@@ -286,7 +286,7 @@ class InstanceTest(unittest.TestCase):
 
         list_stats = []
 
-        for i in xrange(10):
+        for i in range(10):
             s = Stats()
             s.save()
             list_stats.append(s)
@@ -415,7 +415,7 @@ class InstanceTest(unittest.TestCase):
         del(_document_registry['Place.NicePlace'])
 
         def query_without_importing_nice_place():
-            print Place.objects.all()
+            print(Place.objects.all())
         self.assertRaises(NotRegistered, query_without_importing_nice_place)
 
     def test_document_registry_regressions(self):
@@ -2557,9 +2557,6 @@ class InstanceTest(unittest.TestCase):
                 'ordering': ['+name']
             }
 
-            def __unicode__(self):
-                return self.name
-
             def __str__(self):
                 return self.name
 
@@ -2612,7 +2609,7 @@ class InstanceTest(unittest.TestCase):
                                    ]), "1")
 
         # $Where
-        self.assertEqual(u",".join([str(b) for b in Book.objects.filter(
+        self.assertEqual(",".join([str(b) for b in Book.objects.filter(
                                     __raw__={
                                         "$where": """
                                             function(){
