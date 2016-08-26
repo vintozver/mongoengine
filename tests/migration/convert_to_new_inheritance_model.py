@@ -42,7 +42,7 @@ class ConvertToNewInheritanceModel(unittest.TestCase):
 
         # 4. Remove indexes
         info = collection.index_information()
-        indexes_to_drop = [key for key, value in info.iteritems()
+        indexes_to_drop = [key for key, value in info.items()
                            if '_types' in dict(value['key'])]
         for index in indexes_to_drop:
             collection.drop_index(index)

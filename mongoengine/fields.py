@@ -22,7 +22,7 @@ from bson import Binary, DBRef, SON, ObjectId
 try:
     from bson.int64 import Int64
 except ImportError:
-    Int64 = long
+    Int64 = int
 
 from mongoengine.errors import ValidationError
 from .base import (BaseField, ComplexBaseField, ObjectIdField, GeoJsonBaseField,
@@ -223,7 +223,7 @@ class LongField(BaseField):
 
     def to_python(self, value):
         try:
-            value = long(value)
+            value = int(value)
         except ValueError:
             pass
         return value
@@ -233,7 +233,7 @@ class LongField(BaseField):
 
     def validate(self, value):
         try:
-            value = long(value)
+            value = int(value)
         except Exception:
             self.error('%s could not be converted to long' % value)
 
@@ -247,7 +247,7 @@ class LongField(BaseField):
         if value is None:
             return value
 
-        return super(LongField, self).prepare_query_value(op, long(value))
+        return super(LongField, self).prepare_query_value(op, int(value))
 
 
 class FloatField(BaseField):
@@ -651,12 +651,12 @@ class DynamicField(BaseField):
             value = dict([(k, v) for k, v in enumerate(value)])
 
         data = {}
-        for k, v in value.iteritems():
+        for k, v in value.items():
             data[k] = self.to_mongo(v, **kwargs)
 
         value = data
         if is_list:  # Convert back to a list
-            value = [v for k, v in sorted(data.iteritems(), key=itemgetter(0))]
+            value = [v for k, v in sorted(data.items(), key=itemgetter(0))]
         return value
 
     def to_python(self, value):

@@ -3626,7 +3626,7 @@ class QuerySetTest(unittest.TestCase):
         info = [(value['key'],
                  value.get('unique', False),
                  value.get('sparse', False))
-                for key, value in info.iteritems()]
+                for key, value in info.items()]
         self.assertTrue(([('_cls', 1), ('message', 1)], False, False) in info)
 
     def test_where(self):

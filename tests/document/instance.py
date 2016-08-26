@@ -2986,7 +2986,7 @@ class InstanceTest(unittest.TestCase):
 
             def expand(self):
                 self.flattened_parameter = {}
-                for parameter_name, parameter in self.parameters.iteritems():
+                for parameter_name, parameter in self.parameters.items():
                     parameter.expand()
 
         class NodesSystem(Document):
@@ -2994,7 +2994,7 @@ class InstanceTest(unittest.TestCase):
             nodes = MapField(ReferenceField(Node, dbref=False))
 
             def save(self, *args, **kwargs):
-                for node_name, node in self.nodes.iteritems():
+                for node_name, node in self.nodes.items():
                     node.expand()
                     node.save(*args, **kwargs)
                 super(NodesSystem, self).save(*args, **kwargs)

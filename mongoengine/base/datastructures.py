@@ -368,11 +368,11 @@ class EmbeddedDocumentList(BaseList):
 
 class StrictDict(object):
     __slots__ = ()
-    _special_fields = set(['get', 'pop', 'iteritems', 'items', 'keys', 'create'])
+    _special_fields = set(['get', 'pop', 'items', 'keys', 'create'])
     _classes = {}
 
     def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __getitem__(self, key):
@@ -403,24 +403,18 @@ class StrictDict(object):
             pass
         return v
 
-    def iteritems(self):
+    def items(self):
         for key in self:
             yield key, self[key]
 
-    def items(self):
-        return [(k, self[k]) for k in iter(self)]
-
-    def iterkeys(self):
-        return iter(self)
-
     def keys(self):
-        return list(iter(self))
+        return iter(self)
 
     def __iter__(self):
         return (key for key in self.__slots__ if hasattr(self, key))
 
     def __len__(self):
-        return len(list(self.iteritems()))
+        return len(list(self.items()))
 
     def __eq__(self, other):
         return self.items() == other.items()
@@ -437,7 +431,7 @@ class StrictDict(object):
                 __slots__ = allowed_keys_tuple
 
                 def __repr__(self):
-                    return "{%s}" % ', '.join('"{0!s}": {0!r}'.format(k) for k in self.iterkeys())
+                    return "{%s}" % ', '.join('"{0!s}": {0!r}'.format(k) for k in self.keys())
 
             cls._classes[allowed_keys] = SpecificStrictDict
         return cls._classes[allowed_keys]

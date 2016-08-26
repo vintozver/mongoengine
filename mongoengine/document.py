@@ -500,7 +500,7 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
 
         # Delete FileFields separately 
         FileField = _import_class('FileField')
-        for name, field in self._fields.iteritems():
+        for name, field in self._fields.items():
             if isinstance(field, FileField): 
                 getattr(self, name).delete()
 

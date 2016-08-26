@@ -355,10 +355,10 @@ class ComplexBaseField(BaseField):
 
         if self.field:
             value_dict = dict([(key, self.field.to_mongo(item, **kwargs))
-                               for key, item in value.iteritems()])
+                               for key, item in value.items()])
         else:
             value_dict = {}
-            for k, v in value.iteritems():
+            for k, v in value.items():
                 if isinstance(v, Document):
                     # We need the id from the saved object to create the DBRef
                     if v.pk is None:
@@ -398,8 +398,8 @@ class ComplexBaseField(BaseField):
         """
         errors = {}
         if self.field:
-            if hasattr(value, 'iteritems') or hasattr(value, 'items'):
-                sequence = value.iteritems()
+            if hasattr(value, 'items'):
+                sequence = value.items()
             else:
                 sequence = enumerate(value)
             for k, v in sequence:

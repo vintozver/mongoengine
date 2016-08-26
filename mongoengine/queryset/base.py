@@ -1524,13 +1524,13 @@ class BaseQuerySet(object):
             }
         """
         total, data, types = self.exec_js(freq_func, field)
-        values = dict([(types.get(k), int(v)) for k, v in data.iteritems()])
+        values = dict([(types.get(k), int(v)) for k, v in data.items()])
 
         if normalize:
             values = dict([(k, float(v) / total) for k, v in values.items()])
 
         frequencies = {}
-        for k, v in values.iteritems():
+        for k, v in values.items():
             if isinstance(k, float):
                 if int(k) == k:
                     k = int(k)
@@ -1629,7 +1629,7 @@ class BaseQuerySet(object):
 
             if isinstance(data, dict):
                 new_data = {}
-                for key, value in data.iteritems():
+                for key, value in data.items():
                     new_path = '%s.%s' % (path, key) if path else key
 
                     if all_fields:

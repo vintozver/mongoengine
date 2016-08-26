@@ -440,7 +440,7 @@ class InheritanceTest(unittest.TestCase):
             meta = {'abstract': True}
         class Human(Mammal): pass
 
-        for k, v in defaults.iteritems():
+        for k, v in defaults.items():
             for cls in [Animal, Fish, Guppy]:
                 self.assertEqual(cls._meta[k], v)
 

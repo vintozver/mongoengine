@@ -59,7 +59,7 @@ class DocumentMetaclass(type):
             # Standard object mixin - merge in any Fields
             if not hasattr(base, '_meta'):
                 base_fields = {}
-                for attr_name, attr_value in base.__dict__.iteritems():
+                for attr_name, attr_value in base.__dict__.items():
                     if not isinstance(attr_value, BaseField):
                         continue
                     attr_value.name = attr_name
@@ -71,7 +71,7 @@ class DocumentMetaclass(type):
 
         # Discover any document fields
         field_names = {}
-        for attr_name, attr_value in attrs.iteritems():
+        for attr_name, attr_value in attrs.items():
             if not isinstance(attr_value, BaseField):
                 continue
             attr_value.name = attr_name
@@ -93,13 +93,13 @@ class DocumentMetaclass(type):
         # Set _fields and db_field maps
         attrs['_fields'] = doc_fields
         attrs['_db_field_map'] = dict([(k, getattr(v, 'db_field', k))
-                                       for k, v in doc_fields.iteritems()])
+                                       for k, v in doc_fields.items()])
         attrs['_reverse_db_field_map'] = dict(
-            (v, k) for k, v in attrs['_db_field_map'].iteritems())
+            (v, k) for k, v in attrs['_db_field_map'].items())
 
         attrs['_fields_ordered'] = tuple(i[1] for i in sorted(
                                          (v.creation_counter, v.name)
-                                         for v in doc_fields.itervalues()))
+                                         for v in doc_fields.values()))
 
         #
         # Set document hierarchy
@@ -169,7 +169,7 @@ class DocumentMetaclass(type):
                     f.__dict__.update({'im_self': getattr(f, '__self__')})
 
         # Handle delete rules
-        for field in new_class._fields.itervalues():
+        for field in new_class._fields.values():
             f = field
             if f.owner_document is None:
                 f.owner_document = new_class
@@ -365,7 +365,7 @@ class TopLevelDocumentMetaclass(DocumentMetaclass):
             new_class.objects = QuerySetManager()
 
         # Validate the fields and set primary key if needed
-        for field_name, field in new_class._fields.iteritems():
+        for field_name, field in new_class._fields.items():
             if field.primary_key:
                 # Ensure only one primary key is set
                 current_pk = new_class._meta.get('id_field')
@@ -428,7 +428,7 @@ class MetaDict(dict):
     _merge_options = ('indexes',)
 
     def merge(self, new_options):
-        for k, v in new_options.iteritems():
+        for k, v in new_options.items():
             if k in self._merge_options:
                 self[k] = self.get(k, []) + v
             else:
