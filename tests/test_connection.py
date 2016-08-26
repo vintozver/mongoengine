@@ -14,16 +14,12 @@ from mongoengine import (
     connect, register_connection,
     Document, DateTimeField
 )
-from mongoengine.python_support import IS_PYMONGO_3
 import mongoengine.connection
 from mongoengine.connection import get_db, get_connection, ConnectionError
 
 
 def get_tz_awareness(connection):
-    if not IS_PYMONGO_3:
-        return connection.tz_aware
-    else:
-        return connection.codec_options.tz_aware
+    return connection.codec_options.tz_aware
 
 
 class ConnectionTest(unittest.TestCase):
@@ -103,10 +99,9 @@ class ConnectionTest(unittest.TestCase):
         actual_connection = get_connection('testdb2')
 
         # Handle PyMongo 3+ Async Connection
-        if IS_PYMONGO_3:
-            # Ensure we are connected, throws ServerSelectionTimeoutError otherwise.
-            # Purposely not catching exception to fail test if thrown.
-            expected_connection.server_info()
+        # Ensure we are connected, throws ServerSelectionTimeoutError otherwise.
+        # Purposely not catching exception to fail test if thrown.
+        expected_connection.server_info()
 
         self.assertEqual(expected_connection, actual_connection)
 
@@ -120,9 +115,6 @@ class ConnectionTest(unittest.TestCase):
         c.admin.add_user("admin", "password")
         c.admin.authenticate("admin", "password")
         c.mongoenginetest.add_user("username", "password")
-
-        if not IS_PYMONGO_3:
-            self.assertRaises(ConnectionError, connect, "testdb_uri_bad", host='mongodb://test:password@localhost')
 
         connect("testdb_uri", host='mongodb://username:password@localhost/mongoenginetest')
 
@@ -147,9 +139,6 @@ class ConnectionTest(unittest.TestCase):
         c.admin.authenticate("admin", "password")
         c.mongoenginetest.add_user("username", "password")
 
-        if not IS_PYMONGO_3:
-            self.assertRaises(ConnectionError, connect, "testdb_uri_bad", host='mongodb://test:password@localhost')
-
         connect("mongoenginetest", host='mongodb://localhost/')
 
         conn = get_connection()
@@ -173,16 +162,9 @@ class ConnectionTest(unittest.TestCase):
         c.admin.add_user('username2', 'password')
 
         # Authentication fails without "authSource"
-        if IS_PYMONGO_3:
-            test_conn = connect('mongoenginetest', alias='test1',
-                                host='mongodb://username2:password@localhost/mongoenginetest')
-            self.assertRaises(OperationFailure, test_conn.server_info)
-        else:
-            self.assertRaises(
-                ConnectionError, connect, 'mongoenginetest', alias='test1',
-                host='mongodb://username2:password@localhost/mongoenginetest'
-            )
-            self.assertRaises(ConnectionError, get_db, 'test1')
+        test_conn = connect('mongoenginetest', alias='test1',
+                            host='mongodb://username2:password@localhost/mongoenginetest')
+        self.assertRaises(OperationFailure, test_conn.server_info)
 
         # Authentication succeeds with "authSource"
         connect(
@@ -253,17 +235,13 @@ class ConnectionTest(unittest.TestCase):
         self.assertEqual(len(mongo_connections.items()), 2)
         self.assertTrue('t1' in mongo_connections.keys())
         self.assertTrue('t2' in mongo_connections.keys())
-        if not IS_PYMONGO_3:
-            self.assertEqual(mongo_connections['t1'].host, 'localhost')
-            self.assertEqual(mongo_connections['t2'].host, '127.0.0.1')
-        else:
-            # Handle PyMongo 3+ Async Connection
-            # Ensure we are connected, throws ServerSelectionTimeoutError otherwise.
-            # Purposely not catching exception to fail test if thrown.
-            mongo_connections['t1'].server_info()
-            mongo_connections['t2'].server_info()
-            self.assertEqual(mongo_connections['t1'].address[0], 'localhost')
-            self.assertEqual(mongo_connections['t2'].address[0], '127.0.0.1')
+        # Handle PyMongo 3+ Async Connection
+        # Ensure we are connected, throws ServerSelectionTimeoutError otherwise.
+        # Purposely not catching exception to fail test if thrown.
+        mongo_connections['t1'].server_info()
+        mongo_connections['t2'].server_info()
+        self.assertEqual(mongo_connections['t1'].address[0], 'localhost')
+        self.assertEqual(mongo_connections['t2'].address[0], '127.0.0.1')
 
 
 if __name__ == '__main__':

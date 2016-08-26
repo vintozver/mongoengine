@@ -30,7 +30,6 @@ from mongoengine.connection import get_db
 from mongoengine.base import _document_registry
 from mongoengine.base.datastructures import BaseDict, EmbeddedDocumentList
 from mongoengine.errors import NotRegistered
-from mongoengine.python_support import PY3, b, bin_type
 
 __all__ = ("FieldTest", "EmbeddedDocumentListFieldTestCase")
 
@@ -653,17 +652,6 @@ class FieldTest(unittest.TestCase):
         log.reload()
         self.assertNotEqual(log.date, d1)
         self.assertEqual(log.date, d2)
-
-        if not PY3:
-            # Pre UTC dates microseconds below 1000 are dropped
-            # This does not seem to be true in PY3
-            d1 = datetime.datetime(1969, 12, 31, 23, 59, 59, 999)
-            d2 = datetime.datetime(1969, 12, 31, 23, 59, 59)
-            log.date = d1
-            log.save()
-            log.reload()
-            self.assertNotEqual(log.date, d1)
-            self.assertEqual(log.date, d2)
 
         LogEntry.drop_collection()
 
@@ -2735,7 +2723,7 @@ class FieldTest(unittest.TestCase):
             content_type = StringField()
             blob = BinaryField()
 
-        BLOB = b('\xe6\x00\xc4\xff\x07')
+        BLOB = b'\xe6\x00\xc4\xff\x07'
         MIME_TYPE = 'application/octet-stream'
 
         Attachment.drop_collection()
@@ -2745,7 +2733,7 @@ class FieldTest(unittest.TestCase):
 
         attachment_1 = Attachment.objects().first()
         self.assertEqual(MIME_TYPE, attachment_1.content_type)
-        self.assertEqual(BLOB, bin_type(attachment_1.blob))
+        self.assertEqual(BLOB, bytes(attachment_1.blob))
 
         Attachment.drop_collection()
 
@@ -2772,13 +2760,12 @@ class FieldTest(unittest.TestCase):
 
         attachment_required = AttachmentRequired()
         self.assertRaises(ValidationError, attachment_required.validate)
-        attachment_required.blob = Binary(b('\xe6\x00\xc4\xff\x07'))
+        attachment_required.blob = Binary(b'\xe6\x00\xc4\xff\x07')
         attachment_required.validate()
 
-        attachment_size_limit = AttachmentSizeLimit(
-            blob=b('\xe6\x00\xc4\xff\x07'))
+        attachment_size_limit = AttachmentSizeLimit(blob=b'\xe6\x00\xc4\xff\x07')
         self.assertRaises(ValidationError, attachment_size_limit.validate)
-        attachment_size_limit.blob = b('\xe6\x00\xc4\xff')
+        attachment_size_limit.blob = b'\xe6\x00\xc4\xff'
         attachment_size_limit.validate()
 
         Attachment.drop_collection()

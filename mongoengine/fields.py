@@ -7,6 +7,7 @@ import urllib2
 import uuid
 import warnings
 from operator import itemgetter
+from io import BytesIO
 
 try:
     import dateutil
@@ -24,13 +25,11 @@ except ImportError:
     Int64 = long
 
 from mongoengine.errors import ValidationError
-from mongoengine.python_support import (PY3, bin_type, txt_type,
-                                        str_types, StringIO)
-from base import (BaseField, ComplexBaseField, ObjectIdField, GeoJsonBaseField,
+from .base import (BaseField, ComplexBaseField, ObjectIdField, GeoJsonBaseField,
                   get_document, BaseDocument)
-from queryset import DO_NOTHING, QuerySet
-from document import Document, EmbeddedDocument
-from connection import get_db, DEFAULT_CONNECTION_NAME
+from .queryset import DO_NOTHING, QuerySet
+from .document import Document, EmbeddedDocument
+from .connection import get_db, DEFAULT_CONNECTION_NAME
 
 try:
     from PIL import Image, ImageOps
@@ -1277,18 +1276,16 @@ class BinaryField(BaseField):
 
     def __set__(self, instance, value):
         """Handle bytearrays in python 3.1"""
-        if PY3 and isinstance(value, bytearray):
-            value = bin_type(value)
+        if isinstance(value, bytearray):
+            value = bytes(value)
         return super(BinaryField, self).__set__(instance, value)
 
     def to_mongo(self, value, **kwargs):
         return Binary(value)
 
     def validate(self, value):
-        if not isinstance(value, (bin_type, txt_type, Binary)):
-            self.error("BinaryField only accepts instances of "
-                       "(%s, %s, Binary)" % (
-                           bin_type.__name__, txt_type.__name__))
+        if not isinstance(value, (bytes, str, Binary)):
+            self.error("BinaryField only accepts instances of (bytes, str, Binary)")
 
         if self.max_bytes is not None and len(value) > self.max_bytes:
             self.error('Binary value is too long')
@@ -1477,7 +1474,7 @@ class FileField(BaseField):
     def __set__(self, instance, value):
         key = self.name
         if ((hasattr(value, 'read') and not
-                isinstance(value, GridFSProxy)) or isinstance(value, str_types)):
+                isinstance(value, GridFSProxy)) or isinstance(value, (bytes, str))):
             # using "FileField() = file/string" notation
             grid_file = instance._data.get(self.name)
             # If a file already exists, delete it
@@ -1594,7 +1591,7 @@ class ImageGridFsProxy(GridFSProxy):
 
         w, h = img.size
 
-        io = StringIO()
+        io = BytesIO()
         img.save(io, img_format, progressive=progressive)
         io.seek(0)
 
@@ -1616,7 +1613,7 @@ class ImageGridFsProxy(GridFSProxy):
     def _put_thumbnail(self, thumbnail, format, progressive, **kwargs):
         w, h = thumbnail.size
 
-        io = StringIO()
+        io = BytesIO()
         thumbnail.save(io, format, progressive=progressive)
         io.seek(0)
 
@@ -1690,11 +1687,8 @@ class ImageField(FileField):
         for att_name, att in extra_args.items():
             value = None
             if isinstance(att, (tuple, list)):
-                if PY3:
-                    value = dict(itertools.zip_longest(params_size, att,
-                                                       fillvalue=None))
-                else:
-                    value = dict(map(None, params_size, att))
+                value = dict(itertools.zip_longest(params_size, att,
+                                                   fillvalue=None))
 
             setattr(self, att_name, value)
 

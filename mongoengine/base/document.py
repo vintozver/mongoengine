@@ -13,7 +13,6 @@ from mongoengine import signals
 from mongoengine.common import _import_class
 from mongoengine.errors import (ValidationError, InvalidDocumentError,
                                 LookUpError, FieldDoesNotExist)
-from mongoengine.python_support import PY3, txt_type
 from mongoengine.base.common import get_document, ALLOW_INHERITANCE
 from mongoengine.base.datastructures import (
     BaseDict,
@@ -253,7 +252,7 @@ class BaseDocument(object):
         return repr_type('<%s: %s>' % (self.__class__.__name__, u))
 
     def __str__(self):
-        return txt_type('%s object' % self.__class__.__name__)
+        return str('%s object' % self.__class__.__name__)
 
     def __eq__(self, other):
         if isinstance(other, self.__class__) and hasattr(other, 'id') and other.id is not None:

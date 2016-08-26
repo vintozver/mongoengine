@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from mongoengine.python_support import txt_type
-
 
 __all__ = ('NotRegistered', 'InvalidDocumentError', 'LookUpError',
            'DoesNotExist', 'MultipleObjectsReturned', 'InvalidQueryError',
@@ -77,7 +75,7 @@ class ValidationError(AssertionError):
         self.message = message
 
     def __str__(self):
-        return txt_type(self.message)
+        return str(self.message)
 
     def __repr__(self):
         return '%s(%s,)' % (self.__class__.__name__, self.message)

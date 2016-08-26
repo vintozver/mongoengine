@@ -17,7 +17,6 @@ from bson import ObjectId, DBRef
 
 from mongoengine import *
 from mongoengine.connection import get_connection, get_db
-from mongoengine.python_support import PY3, IS_PYMONGO_3
 from mongoengine.context_managers import query_counter, switch_db
 from mongoengine.queryset import (QuerySet, QuerySetManager,
                                   MultipleObjectsReturned, DoesNotExist,
@@ -42,20 +41,6 @@ def skip_older_mongodb(f):
 
         if mongodb_version < (2, 6):
             raise SkipTest("Need MongoDB version 2.6+")
-
-        return f(*args, **kwargs)
-
-    _inner.__name__ = f.__name__
-    _inner.__doc__ = f.__doc__
-
-    return _inner
-
-
-def skip_pymongo3(f):
-    def _inner(*args, **kwargs):
-
-        if IS_PYMONGO_3:
-            raise SkipTest("Useless with PyMongo 3+")
 
         return f(*args, **kwargs)
 
@@ -924,48 +909,6 @@ class QuerySetTest(unittest.TestCase):
             fresh_o1.save(cascade=False)   # Saves
 
             self.assertEqual(q, 3)
-
-    @skip_pymongo3
-    def test_slave_okay(self):
-        """Ensures that a query can take slave_okay syntax.
-        Useless with PyMongo 3+ as well as with MongoDB 3+.
-        """
-        person1 = self.Person(name="User A", age=20)
-        person1.save()
-        person2 = self.Person(name="User B", age=30)
-        person2.save()
-
-        # Retrieve the first person from the database
-        person = self.Person.objects.slave_okay(True).first()
-        self.assertTrue(isinstance(person, self.Person))
-        self.assertEqual(person.name, "User A")
-        self.assertEqual(person.age, 20)
-
-    @skip_older_mongodb
-    @skip_pymongo3
-    def test_cursor_args(self):
-        """Ensures the cursor args can be set as expected
-        """
-        p = self.Person.objects
-        # Check default
-        self.assertEqual(p._cursor_args,
-                         {'snapshot': False, 'slave_okay': False, 'timeout': True})
-
-        p = p.snapshot(False).slave_okay(False).timeout(False)
-        self.assertEqual(p._cursor_args,
-                         {'snapshot': False, 'slave_okay': False, 'timeout': False})
-
-        p = p.snapshot(True).slave_okay(False).timeout(False)
-        self.assertEqual(p._cursor_args,
-                         {'snapshot': True, 'slave_okay': False, 'timeout': False})
-
-        p = p.snapshot(True).slave_okay(True).timeout(False)
-        self.assertEqual(p._cursor_args,
-                         {'snapshot': True, 'slave_okay': True, 'timeout': False})
-
-        p = p.snapshot(True).slave_okay(True).timeout(True)
-        self.assertEqual(p._cursor_args,
-                         {'snapshot': True, 'slave_okay': True, 'timeout': True})
 
     def test_repeated_iteration(self):
         """Ensure that QuerySet rewinds itself one iteration finishes.
@@ -3021,10 +2964,7 @@ class QuerySetTest(unittest.TestCase):
         self.assertEqual(query.count(), 3)
         self.assertEqual(query._query, {'$text': {'$search': 'brasil'}})
         cursor_args = query._cursor_args
-        if not IS_PYMONGO_3:
-            cursor_args_fields = cursor_args['fields']
-        else:
-            cursor_args_fields = cursor_args['projection']
+        cursor_args_fields = cursor_args['projection']
         self.assertEqual(
             cursor_args_fields, {'_text_score': {'$meta': 'textScore'}})
 
@@ -3996,16 +3936,10 @@ class QuerySetTest(unittest.TestCase):
             "A0", "%s" % self.Person.objects.order_by('name').scalar('name').first())
         self.assertEqual(
             "A0", "%s" % self.Person.objects.scalar('name').order_by('name')[0])
-        if PY3:
-            self.assertEqual(
-                "['A1', 'A2']",  "%s" % self.Person.objects.order_by('age').scalar('name')[1:3])
-            self.assertEqual("['A51', 'A52']",  "%s" % self.Person.objects.order_by(
-                'age').scalar('name')[51:53])
-        else:
-            self.assertEqual("['A1', 'A2']",  "%s" % self.Person.objects.order_by(
-                'age').scalar('name')[1:3])
-            self.assertEqual("['A51', 'A52']",  "%s" % self.Person.objects.order_by(
-                'age').scalar('name')[51:53])
+        self.assertEqual(
+            "['A1', 'A2']",  "%s" % self.Person.objects.order_by('age').scalar('name')[1:3])
+        self.assertEqual("['A51', 'A52']",  "%s" % self.Person.objects.order_by(
+            'age').scalar('name')[51:53])
 
         # with_id and in_bulk
         person = self.Person.objects.order_by('name').first()
@@ -4013,12 +3947,8 @@ class QuerySetTest(unittest.TestCase):
                          self.Person.objects.scalar('name').with_id(person.id))
 
         pks = self.Person.objects.order_by('age').scalar('pk')[1:3]
-        if PY3:
-            self.assertEqual("['A1', 'A2']",  "%s" % sorted(
-                self.Person.objects.scalar('name').in_bulk(list(pks)).values()))
-        else:
-            self.assertEqual("['A1', 'A2']",  "%s" % sorted(
-                self.Person.objects.scalar('name').in_bulk(list(pks)).values()))
+        self.assertEqual("['A1', 'A2']",  "%s" % sorted(
+            self.Person.objects.scalar('name').in_bulk(list(pks)).values()))
 
     def test_elem_match(self):
         class Foo(EmbeddedDocument):
@@ -4122,11 +4052,7 @@ class QuerySetTest(unittest.TestCase):
         bars = list(Bar.objects(read_preference=ReadPreference.PRIMARY))
         self.assertEqual([], bars)
 
-        if not IS_PYMONGO_3:
-            error_class = ConfigurationError
-        else:
-            error_class = TypeError
-        self.assertRaises(error_class, Bar.objects, read_preference='Primary')
+        self.assertRaises(TypeError, Bar.objects, read_preference='Primary')
 
         # read_preference as a kwarg
         bars = Bar.objects(read_preference=ReadPreference.SECONDARY_PREFERRED)

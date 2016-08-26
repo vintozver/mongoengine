@@ -4,17 +4,10 @@ sys.path[0:0] = [""]
 import unittest
 
 from pymongo import ReadPreference
+from pymongo import MongoClient
 
-from mongoengine.python_support import IS_PYMONGO_3
-
-if IS_PYMONGO_3:
-    from pymongo import MongoClient
-    CONN_CLASS = MongoClient
-    READ_PREF = ReadPreference.SECONDARY
-else:
-    from pymongo import ReplicaSetConnection
-    CONN_CLASS = ReplicaSetConnection
-    READ_PREF = ReadPreference.SECONDARY_ONLY
+CONN_CLASS = MongoClient
+READ_PREF = ReadPreference.SECONDARY
 
 import mongoengine
 from mongoengine import *

@@ -2,7 +2,6 @@ import warnings
 
 from mongoengine.common import _import_class
 from mongoengine.errors import InvalidDocumentError
-from mongoengine.python_support import PY3
 from mongoengine.queryset import (DO_NOTHING, DoesNotExist,
                                   MultipleObjectsReturned,
                                   QuerySetManager)
@@ -161,14 +160,13 @@ class DocumentMetaclass(type):
         # module continues to use im_func and im_self, so the code below
         # copies __func__ into im_func and __self__ into im_self for
         # classmethod objects in Document derived classes.
-        if PY3:
-            for key, val in new_class.__dict__.items():
-                if isinstance(val, classmethod):
-                    f = val.__get__(new_class)
-                    if hasattr(f, '__func__') and not hasattr(f, 'im_func'):
-                        f.__dict__.update({'im_func': getattr(f, '__func__')})
-                    if hasattr(f, '__self__') and not hasattr(f, 'im_self'):
-                        f.__dict__.update({'im_self': getattr(f, '__self__')})
+        for key, val in new_class.__dict__.items():
+            if isinstance(val, classmethod):
+                f = val.__get__(new_class)
+                if hasattr(f, '__func__') and not hasattr(f, 'im_func'):
+                    f.__dict__.update({'im_func': getattr(f, '__func__')})
+                if hasattr(f, '__self__') and not hasattr(f, 'im_self'):
+                    f.__dict__.update({'im_self': getattr(f, '__self__')})
 
         # Handle delete rules
         for field in new_class._fields.itervalues():
