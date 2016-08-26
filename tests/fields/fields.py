@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import six
 from nose.plugins.skip import SkipTest
 
 sys.path[0:0] = [""]
@@ -12,7 +11,6 @@ import uuid
 import math
 import itertools
 import re
-import six
 
 try:
     import dateutil
@@ -427,9 +425,8 @@ class FieldTest(unittest.TestCase):
 
         big_person = BigPerson()
 
-        for value, value_type in enumerate(six.integer_types):
-            big_person.height = value_type(value)
-            big_person.validate()
+        big_person.height = 0
+        big_person.validate()
 
         big_person.height = 2 ** 500
         big_person.validate()
@@ -3657,7 +3654,7 @@ class FieldTest(unittest.TestCase):
         doc = TestLongFieldConsideredAsInt64(some_long=42).save()
         db = get_db()
         self.assertTrue(isinstance(db.test_long_field_considered_as_int64.find()[0]['some_long'], Int64))
-        self.assertTrue(isinstance(doc.some_long, six.integer_types))
+        self.assertTrue(isinstance(doc.some_long, int))
 
 
 class EmbeddedDocumentListFieldTestCase(unittest.TestCase):

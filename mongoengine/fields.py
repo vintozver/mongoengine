@@ -8,8 +8,6 @@ import uuid
 import warnings
 from operator import itemgetter
 
-import six
-
 try:
     import dateutil
 except ImportError:
@@ -269,7 +267,7 @@ class FloatField(BaseField):
         return value
 
     def validate(self, value):
-        if isinstance(value, six.integer_types):
+        if isinstance(value, int):
             try:
                 value = float(value)
             except OverflowError:

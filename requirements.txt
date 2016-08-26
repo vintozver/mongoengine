@@ -1,3 +1,2 @@
 nose
 pymongo>=3.2
-six==1.10.0
