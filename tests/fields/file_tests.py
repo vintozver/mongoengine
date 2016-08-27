@@ -6,13 +6,13 @@ import copy
 import os
 import unittest
 import tempfile
+from io import BytesIO
 
 import gridfs
 
 from nose.plugins.skip import SkipTest
 from mongoengine import *
 from mongoengine.connection import get_db
-from mongoengine.python_support import b, StringIO
 
 try:
     from PIL import Image
@@ -49,7 +49,7 @@ class FileTest(unittest.TestCase):
 
         PutFile.drop_collection()
 
-        text = b('Hello, World!')
+        text = b'Hello, World!'
         content_type = 'text/plain'
 
         putfile = PutFile()
@@ -68,7 +68,7 @@ class FileTest(unittest.TestCase):
         PutFile.drop_collection()
 
         putfile = PutFile()
-        putstring = StringIO()
+        putstring = BytesIO()
         putstring.write(text)
         putstring.seek(0)
         putfile.the_file.put(putstring, content_type=content_type)
@@ -88,8 +88,8 @@ class FileTest(unittest.TestCase):
 
         StreamFile.drop_collection()
 
-        text = b('Hello, World!')
-        more_text = b('Foo Bar')
+        text = b'Hello, World!'
+        more_text = b'Foo Bar'
         content_type = 'text/plain'
 
         streamfile = StreamFile()
@@ -123,8 +123,8 @@ class FileTest(unittest.TestCase):
 
         StreamFile.drop_collection()
 
-        text = b('Hello, World!')
-        more_text = b('Foo Bar')
+        text = b'Hello, World!'
+        more_text = b'Foo Bar'
         content_type = 'text/plain'
 
         streamfile = StreamFile()
@@ -155,8 +155,8 @@ class FileTest(unittest.TestCase):
         class SetFile(Document):
             the_file = FileField()
 
-        text = b('Hello, World!')
-        more_text = b('Foo Bar')
+        text = b'Hello, World!'
+        more_text = b'Foo Bar'
 
         SetFile.drop_collection()
 
@@ -185,7 +185,7 @@ class FileTest(unittest.TestCase):
         GridDocument.drop_collection()
 
         with tempfile.TemporaryFile() as f:
-            f.write(b("Hello World!"))
+            f.write(b"Hello World!")
             f.flush()
 
             # Test without default
@@ -202,7 +202,7 @@ class FileTest(unittest.TestCase):
             self.assertEqual(doc_b.the_file.grid_id, doc_c.the_file.grid_id)
 
             # Test with default
-            doc_d = GridDocument(the_file=b(''))
+            doc_d = GridDocument(the_file=b'')
             doc_d.save()
 
             doc_e = GridDocument.objects.with_id(doc_d.id)
@@ -228,7 +228,7 @@ class FileTest(unittest.TestCase):
         # First instance
         test_file = TestFile()
         test_file.name = "Hello, World!"
-        test_file.the_file.put(b('Hello, World!'))
+        test_file.the_file.put(b'Hello, World!')
         test_file.save()
 
         # Second instance
@@ -282,7 +282,7 @@ class FileTest(unittest.TestCase):
 
         test_file = TestFile()
         self.assertFalse(bool(test_file.the_file))
-        test_file.the_file.put(b('Hello, World!'), content_type='text/plain')
+        test_file.the_file.put(b'Hello, World!', content_type='text/plain')
         test_file.save()
         self.assertTrue(bool(test_file.the_file))
 
@@ -302,7 +302,7 @@ class FileTest(unittest.TestCase):
         class TestFile(Document):
             the_file = FileField()
             
-        text = b('Hello, World!')
+        text = b'Hello, World!'
         content_type = 'text/plain'
 
         testfile = TestFile()
@@ -314,16 +314,16 @@ class FileTest(unittest.TestCase):
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 1)
-        self.assertEquals(len(list(chunks)), 1)
+        self.assertEqual(len(list(files)), 1)
+        self.assertEqual(len(list(chunks)), 1)
 
         # Deleting the docoument should delete the files 
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         # Test case where we don't store a file in the first place 
         testfile = TestFile()
@@ -331,36 +331,36 @@ class FileTest(unittest.TestCase):
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
         
         # Test case where we overwrite the file 
         testfile = TestFile()
         testfile.the_file.put(text, content_type=content_type, filename="hello")
         testfile.save()
         
-        text = b('Bonjour, World!')
+        text = b'Bonjour, World!'
         testfile.the_file.replace(text, content_type=content_type, filename="hello")
         testfile.save()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 1)
-        self.assertEquals(len(list(chunks)), 1)
+        self.assertEqual(len(list(files)), 1)
+        self.assertEqual(len(list(chunks)), 1)
         
         testfile.delete()
         
         files = db.fs.files.find()
         chunks = db.fs.chunks.find()
-        self.assertEquals(len(list(files)), 0)
-        self.assertEquals(len(list(chunks)), 0)
+        self.assertEqual(len(list(files)), 0)
+        self.assertEqual(len(list(chunks)), 0)
 
     def test_image_field(self):
         if not HAS_PIL:
@@ -372,14 +372,14 @@ class FileTest(unittest.TestCase):
         TestImage.drop_collection()
 
         with tempfile.TemporaryFile() as f:
-            f.write(b("Hello World!"))
+            f.write(b"Hello World!")
             f.flush()
 
             t = TestImage()
             try:
                 t.image.put(f)
                 self.fail("Should have raised an invalidation error")
-            except ValidationError, e:
+            except ValidationError as e:
                 self.assertEqual("%s" % e, "Invalid image: cannot identify image file %s" % f)
 
         t = TestImage()
@@ -496,24 +496,21 @@ class FileTest(unittest.TestCase):
         # First instance
         test_file = TestFile()
         test_file.name = "Hello, World!"
-        test_file.the_file.put(b('Hello, World!'),
-                          name="hello.txt")
+        test_file.the_file.put(b'Hello, World!', name="hello.txt")
         test_file.save()
 
         data = get_db("test_files").macumba.files.find_one()
         self.assertEqual(data.get('name'), 'hello.txt')
 
         test_file = TestFile.objects.first()
-        self.assertEqual(test_file.the_file.read(),
-                          b('Hello, World!'))
+        self.assertEqual(test_file.the_file.read(), b'Hello, World!')
 
         test_file = TestFile.objects.first()
-        test_file.the_file = b('HELLO, WORLD!')
+        test_file.the_file = b'HELLO, WORLD!'
         test_file.save()
 
         test_file = TestFile.objects.first()
-        self.assertEqual(test_file.the_file.read(),
-                          b('HELLO, WORLD!'))
+        self.assertEqual(test_file.the_file.read(), b'HELLO, WORLD!')
 
     def test_copyable(self):
         class PutFile(Document):
@@ -521,7 +518,7 @@ class FileTest(unittest.TestCase):
 
         PutFile.drop_collection()
 
-        text = b('Hello, World!')
+        text = b'Hello, World!'
         content_type = 'text/plain'
 
         putfile = PutFile()

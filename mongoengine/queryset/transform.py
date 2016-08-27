@@ -7,7 +7,6 @@ from mongoengine.base.fields import UPDATE_OPERATORS
 from mongoengine.connection import get_connection
 from mongoengine.common import _import_class
 from mongoengine.errors import InvalidQueryError
-from mongoengine.python_support import IS_PYMONGO_3
 
 __all__ = ('query', 'update')
 
@@ -57,7 +56,7 @@ def query(_doc_cls=None, **kwargs):
             # Switch field names to proper names [set in Field(name='foo')]
             try:
                 fields = _doc_cls._lookup_field(parts)
-            except Exception, e:
+            except Exception as e:
                 raise InvalidQueryError(e)
             parts = []
 
@@ -66,7 +65,7 @@ def query(_doc_cls=None, **kwargs):
             cleaned_fields = []
             for field in fields:
                 append_field = True
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     parts.append(field)
                     append_field = False
                 # is last and CachedReferenceField
@@ -84,9 +83,9 @@ def query(_doc_cls=None, **kwargs):
             singular_ops = [None, 'ne', 'gt', 'gte', 'lt', 'lte', 'not']
             singular_ops += STRING_OPERATORS
             if op in singular_ops:
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     if (op in STRING_OPERATORS and
-                            isinstance(value, basestring)):
+                            isinstance(value, str)):
                         StringField = _import_class('StringField')
                         value = StringField.prepare_query_value(op, value)
                     else:
@@ -136,7 +135,7 @@ def query(_doc_cls=None, **kwargs):
                 if ('$maxDistance' in value_dict or '$minDistance' in value_dict) and \
                         ('$near' in value_dict or '$nearSphere' in value_dict):
                     value_son = SON()
-                    for k, v in value_dict.iteritems():
+                    for k, v in value_dict.items():
                         if k == '$maxDistance' or k == '$minDistance':
                             continue
                         value_son[k] = v
@@ -144,8 +143,7 @@ def query(_doc_cls=None, **kwargs):
                     # PyMongo 3+ and MongoDB < 2.6
                     near_embedded = False
                     for near_op in ('$near', '$nearSphere'):
-                        if isinstance(value_dict.get(near_op), dict) and (
-                                IS_PYMONGO_3 or get_connection().max_wire_version > 1):
+                        if isinstance(value_dict.get(near_op), dict):
                             value_son[near_op] = SON(value_son[near_op])
                             if '$maxDistance' in value_dict:
                                 value_son[near_op][
@@ -216,7 +214,7 @@ def update(_doc_cls=None, **update):
             # Switch field names to proper names [set in Field(name='foo')]
             try:
                 fields = _doc_cls._lookup_field(parts)
-            except Exception, e:
+            except Exception as e:
                 raise InvalidQueryError(e)
             parts = []
 
@@ -224,7 +222,7 @@ def update(_doc_cls=None, **update):
             appended_sub_field = False
             for field in fields:
                 append_field = True
-                if isinstance(field, basestring):
+                if isinstance(field, str):
                     # Convert the S operator to $
                     if field == 'S':
                         field = '$'

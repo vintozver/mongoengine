@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import six
 from nose.plugins.skip import SkipTest
 
 sys.path[0:0] = [""]
@@ -12,7 +11,6 @@ import uuid
 import math
 import itertools
 import re
-import six
 
 try:
     import dateutil
@@ -25,14 +23,13 @@ from bson import Binary, DBRef, ObjectId
 try:
     from bson.int64 import Int64
 except ImportError:
-    Int64 = long
+    Int64 = int
 
 from mongoengine import *
 from mongoengine.connection import get_db
 from mongoengine.base import _document_registry
 from mongoengine.base.datastructures import BaseDict, EmbeddedDocumentList
 from mongoengine.errors import NotRegistered
-from mongoengine.python_support import PY3, b, bin_type
 
 __all__ = ("FieldTest", "EmbeddedDocumentListFieldTestCase")
 
@@ -208,7 +205,7 @@ class FieldTest(unittest.TestCase):
         HandleNoneFields.drop_collection()
 
         doc = HandleNoneFields()
-        doc.str_fld = u'spam ham egg'
+        doc.str_fld = 'spam ham egg'
         doc.int_fld = 42
         doc.flt_fld = 4.2
         doc.com_dt_fld = datetime.datetime.utcnow()
@@ -244,7 +241,7 @@ class FieldTest(unittest.TestCase):
         HandleNoneFields.drop_collection()
 
         doc = HandleNoneFields()
-        doc.str_fld = u'spam ham egg'
+        doc.str_fld = 'spam ham egg'
         doc.int_fld = 42
         doc.flt_fld = 4.2
         doc.com_dt_fld = datetime.datetime.utcnow()
@@ -427,9 +424,8 @@ class FieldTest(unittest.TestCase):
 
         big_person = BigPerson()
 
-        for value, value_type in enumerate(six.integer_types):
-            big_person.height = value_type(value)
-            big_person.validate()
+        big_person.height = 0
+        big_person.validate()
 
         big_person.height = 2 ** 500
         big_person.validate()
@@ -639,8 +635,8 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond and
         # dropped
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
-        d2 = datetime.datetime(1970, 01, 01, 00, 00, 01)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
+        d2 = datetime.datetime(1970, 1, 1, 0, 0, 1)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -649,24 +645,13 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(log.date, d2)
 
         # Post UTC - microseconds are rounded (down) nearest millisecond
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9999)
-        d2 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9000)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9999)
+        d2 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9000)
         log.date = d1
         log.save()
         log.reload()
         self.assertNotEqual(log.date, d1)
         self.assertEqual(log.date, d2)
-
-        if not PY3:
-            # Pre UTC dates microseconds below 1000 are dropped
-            # This does not seem to be true in PY3
-            d1 = datetime.datetime(1969, 12, 31, 23, 59, 59, 999)
-            d2 = datetime.datetime(1969, 12, 31, 23, 59, 59)
-            log.date = d1
-            log.save()
-            log.reload()
-            self.assertNotEqual(log.date, d1)
-            self.assertEqual(log.date, d2)
 
         LogEntry.drop_collection()
 
@@ -677,7 +662,7 @@ class FieldTest(unittest.TestCase):
 
         LogEntry.drop_collection()
 
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1)
         log = LogEntry()
         log.date = d1
         log.validate()
@@ -694,8 +679,8 @@ class FieldTest(unittest.TestCase):
         LogEntry.drop_collection()
 
         # create 60 log entries
-        for i in xrange(1950, 2010):
-            d = datetime.datetime(i, 01, 01, 00, 00, 01)
+        for i in range(1950, 2010):
+            d = datetime.datetime(i, 1, 1, 0, 0, 1)
             LogEntry(date=d).save()
 
         self.assertEqual(LogEntry.objects.count(), 60)
@@ -742,7 +727,7 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond and
         # dropped - with default datetimefields
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -751,7 +736,7 @@ class FieldTest(unittest.TestCase):
 
         # Post UTC - microseconds are rounded (down) nearest millisecond - with
         # default datetimefields
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 9999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 9999)
         log.date = d1
         log.save()
         log.reload()
@@ -768,7 +753,7 @@ class FieldTest(unittest.TestCase):
         # Pre UTC microseconds above 1000 is wonky - with default datetimefields
         # log.date has an invalid microsecond value so I can't construct
         # a date to compare.
-        for i in xrange(1001, 3113, 33):
+        for i in range(1001, 3113, 33):
             d1 = datetime.datetime(1969, 12, 31, 23, 59, 59, i)
             log.date = d1
             log.save()
@@ -778,7 +763,7 @@ class FieldTest(unittest.TestCase):
             self.assertEqual(log, log1)
 
         # Test string padding
-        microsecond = map(int, [math.pow(10, x) for x in xrange(6)])
+        microsecond = list(map(int, [math.pow(10, x) for x in range(6)]))
         mm = dd = hh = ii = ss = [1, 10]
 
         for values in itertools.product([2014], mm, dd, hh, ii, ss, microsecond):
@@ -800,7 +785,7 @@ class FieldTest(unittest.TestCase):
 
         LogEntry.drop_collection()
 
-        d1 = datetime.datetime(1970, 01, 01, 00, 00, 01, 999)
+        d1 = datetime.datetime(1970, 1, 1, 0, 0, 1, 999)
         log = LogEntry()
         log.date = d1
         log.save()
@@ -811,8 +796,8 @@ class FieldTest(unittest.TestCase):
         LogEntry.drop_collection()
 
         # create 60 log entries
-        for i in xrange(1950, 2010):
-            d = datetime.datetime(i, 01, 01, 00, 00, 01, 999)
+        for i in range(1950, 2010):
+            d = datetime.datetime(i, 1, 1, 0, 0, 1, 999)
             LogEntry(date=d).save()
 
         self.assertEqual(LogEntry.objects.count(), 60)
@@ -1552,7 +1537,7 @@ class FieldTest(unittest.TestCase):
             actions__friends__operation='drink',
             actions__friends__object='beer').count())
 
-    def test_map_field_unicode(self):
+    def test_map_field_str(self):
 
         class Info(EmbeddedDocument):
             description = StringField()
@@ -1564,14 +1549,14 @@ class FieldTest(unittest.TestCase):
         BlogPost.drop_collection()
 
         tree = BlogPost(info_dict={
-            u"éééé": {
-                'description': u"VALUE: éééé"
+            "éééé": {
+                'description': "VALUE: éééé"
             }
         })
 
         tree.save()
 
-        self.assertEqual(BlogPost.objects.get(id=tree.id).info_dict[u"éééé"].description, u"VALUE: éééé")
+        self.assertEqual(BlogPost.objects.get(id=tree.id).info_dict["éééé"].description, "VALUE: éééé")
 
         BlogPost.drop_collection()
 
@@ -1915,11 +1900,11 @@ class FieldTest(unittest.TestCase):
 
         self.assertEqual(dict(a2.to_mongo()), {
             "_id": a2.pk,
-            "name": u"Wilson Junior",
-            "tp": u"pf",
+            "name": "Wilson Junior",
+            "tp": "pf",
             "father": {
                 "_id": a1.pk,
-                "tp": u"pj"
+                "tp": "pj"
             }
         })
 
@@ -1934,11 +1919,11 @@ class FieldTest(unittest.TestCase):
         a2.reload()
         self.assertEqual(dict(a2.to_mongo()), {
             "_id": a2.pk,
-            "name": u"Wilson Junior",
-            "tp": u"pf",
+            "name": "Wilson Junior",
+            "tp": "pf",
             "father": {
                 "_id": a1.pk,
-                "tp": u"pf"
+                "tp": "pf"
             }
         })
 
@@ -2401,7 +2386,7 @@ class FieldTest(unittest.TestCase):
         brother = Brother(name="Bob", sibling=sister)
         brother.save()
 
-        self.assertEquals(Brother.objects[0].sibling.name, sister.name)
+        self.assertEqual(Brother.objects[0].sibling.name, sister.name)
 
         Sister.drop_collection()
         Brother.drop_collection()
@@ -2738,7 +2723,7 @@ class FieldTest(unittest.TestCase):
             content_type = StringField()
             blob = BinaryField()
 
-        BLOB = b('\xe6\x00\xc4\xff\x07')
+        BLOB = b'\xe6\x00\xc4\xff\x07'
         MIME_TYPE = 'application/octet-stream'
 
         Attachment.drop_collection()
@@ -2748,7 +2733,7 @@ class FieldTest(unittest.TestCase):
 
         attachment_1 = Attachment.objects().first()
         self.assertEqual(MIME_TYPE, attachment_1.content_type)
-        self.assertEqual(BLOB, bin_type(attachment_1.blob))
+        self.assertEqual(BLOB, bytes(attachment_1.blob))
 
         Attachment.drop_collection()
 
@@ -2775,13 +2760,12 @@ class FieldTest(unittest.TestCase):
 
         attachment_required = AttachmentRequired()
         self.assertRaises(ValidationError, attachment_required.validate)
-        attachment_required.blob = Binary(b('\xe6\x00\xc4\xff\x07'))
+        attachment_required.blob = Binary(b'\xe6\x00\xc4\xff\x07')
         attachment_required.validate()
 
-        attachment_size_limit = AttachmentSizeLimit(
-            blob=b('\xe6\x00\xc4\xff\x07'))
+        attachment_size_limit = AttachmentSizeLimit(blob=b'\xe6\x00\xc4\xff\x07')
         self.assertRaises(ValidationError, attachment_size_limit.validate)
-        attachment_size_limit.blob = b('\xe6\x00\xc4\xff')
+        attachment_size_limit.blob = b'\xe6\x00\xc4\xff'
         attachment_size_limit.validate()
 
         Attachment.drop_collection()
@@ -3002,8 +2986,8 @@ class FieldTest(unittest.TestCase):
         """
         SIZES = ('S', 'M', 'L', 'XL', 'XXL')
         COLORS = (('R', 'Red'), ('B', 'Blue'))
-        SIZE_MESSAGE = u"Value must be one of ('S', 'M', 'L', 'XL', 'XXL')"
-        COLOR_MESSAGE = u"Value must be one of ['R', 'B']"
+        SIZE_MESSAGE = "Value must be one of ('S', 'M', 'L', 'XL', 'XXL')"
+        COLOR_MESSAGE = "Value must be one of ['R', 'B']"
 
         class Shirt(Document):
             size = StringField(max_length=3, choices=SIZES)
@@ -3023,7 +3007,7 @@ class FieldTest(unittest.TestCase):
 
         try:
             shirt.validate()
-        except ValidationError, error:
+        except ValidationError as error:
             # get the validation rules
             error_dict = error.to_dict()
             self.assertEqual(error_dict['size'], SIZE_MESSAGE)
@@ -3052,14 +3036,14 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3076,7 +3060,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         self.assertEqual(Person.id.get_next_value(), 11)
@@ -3091,7 +3075,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         self.assertEqual(Person.id.get_next_value(), '11')
@@ -3107,14 +3091,14 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'jelly.id'})
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'jelly.id'})
         self.assertEqual(c['next'], 10)
@@ -3132,17 +3116,17 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Person(name="Person %s" % x).save()
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         counters = [i.counter for i in Person.objects]
-        self.assertEqual(counters, range(1, 11))
+        self.assertEqual(counters, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3194,7 +3178,7 @@ class FieldTest(unittest.TestCase):
         Animal.drop_collection()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             Animal(name="Animal %s" % x).save()
             Person(name="Person %s" % x).save()
 
@@ -3205,10 +3189,10 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         id = [i.id for i in Animal.objects]
-        self.assertEqual(id, range(1, 11))
+        self.assertEqual(id, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3224,7 +3208,7 @@ class FieldTest(unittest.TestCase):
         self.db['mongoengine.counters'].drop()
         Person.drop_collection()
 
-        for x in xrange(10):
+        for x in range(10):
             p = Person(name="Person %s" % x)
             p.save()
 
@@ -3232,7 +3216,7 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, map(str, range(1, 11)))
+        self.assertEqual(ids, list(map(str, list(range(1, 11)))))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3411,7 +3395,7 @@ class FieldTest(unittest.TestCase):
         self.assertRaises(ValidationError, post.validate)
         try:
             post.validate()
-        except ValidationError, error:
+        except ValidationError as error:
             # ValidationError.errors property
             self.assertTrue(hasattr(error, 'errors'))
             self.assertTrue(isinstance(error.errors, dict))
@@ -3427,7 +3411,7 @@ class FieldTest(unittest.TestCase):
             self.assertTrue(1 in error_dict['comments'])
             self.assertTrue('content' in error_dict['comments'][1])
             self.assertEqual(error_dict['comments'][1]['content'],
-                             u'Field is required')
+                             'Field is required')
 
         post.comments[1].content = 'here we go'
         post.validate()
@@ -3606,8 +3590,8 @@ class FieldTest(unittest.TestCase):
         Dog().save()
         Fish().save()
         Human().save()
-        self.assertEquals(Animal.objects(_cls__in=["Animal.Mammal.Dog", "Animal.Fish"]).count(), 2)
-        self.assertEquals(Animal.objects(_cls__in=["Animal.Fish.Guppy"]).count(), 0)
+        self.assertEqual(Animal.objects(_cls__in=["Animal.Mammal.Dog", "Animal.Fish"]).count(), 2)
+        self.assertEqual(Animal.objects(_cls__in=["Animal.Fish.Guppy"]).count(), 0)
 
     def test_sparse_field(self):
         class Doc(Document):
@@ -3657,7 +3641,7 @@ class FieldTest(unittest.TestCase):
         doc = TestLongFieldConsideredAsInt64(some_long=42).save()
         db = get_db()
         self.assertTrue(isinstance(db.test_long_field_considered_as_int64.find()[0]['some_long'], Int64))
-        self.assertTrue(isinstance(doc.some_long, six.integer_types))
+        self.assertTrue(isinstance(doc.some_long, int))
 
 
 class EmbeddedDocumentListFieldTestCase(unittest.TestCase):
@@ -4046,15 +4030,15 @@ class EmbeddedDocumentListFieldTestCase(unittest.TestCase):
         # modified
         self.assertEqual(number, 2)
 
-    def test_unicode(self):
+    def test_str(self):
         """
-        Tests that unicode strings handled correctly
+        Tests that strings handled correctly
         """
         post = self.BlogPost(comments=[
-            self.Comments(author='user1', message=u'сообщение'),
-            self.Comments(author='user2', message=u'хабарлама')
+            self.Comments(author='user1', message='сообщение'),
+            self.Comments(author='user2', message='хабарлама')
         ]).save()
-        self.assertEqual(post.comments.get(message=u'сообщение').author,
+        self.assertEqual(post.comments.get(message='сообщение').author,
                          'user1')
 
     def test_save(self):

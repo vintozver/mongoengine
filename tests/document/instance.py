@@ -178,15 +178,15 @@ class InstanceTest(unittest.TestCase):
         Log.drop_collection()
 
     def test_repr(self):
-        """Ensure that unicode representation works
+        """Ensure that str representation works
         """
         class Article(Document):
             title = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
-        doc = Article(title=u'привет мир')
+        doc = Article(title='привет мир')
 
         self.assertEqual('<Article: привет мир>', repr(doc))
 
@@ -199,7 +199,7 @@ class InstanceTest(unittest.TestCase):
             def __str__(self):
                 return None
 
-        doc = Article(title=u'привет мир')
+        doc = Article(title='привет мир')
 
         self.assertEqual('<Article: None>', repr(doc))
 
@@ -286,7 +286,7 @@ class InstanceTest(unittest.TestCase):
 
         list_stats = []
 
-        for i in xrange(10):
+        for i in range(10):
             s = Stats()
             s.save()
             list_stats.append(s)
@@ -415,7 +415,7 @@ class InstanceTest(unittest.TestCase):
         del(_document_registry['Place.NicePlace'])
 
         def query_without_importing_nice_place():
-            print Place.objects.all()
+            print(Place.objects.all())
         self.assertRaises(NotRegistered, query_without_importing_nice_place)
 
     def test_document_registry_regressions(self):
@@ -745,7 +745,7 @@ class InstanceTest(unittest.TestCase):
 
         try:
             t.save()
-        except ValidationError, e:
+        except ValidationError as e:
             expect_msg = "Draft entries may not have a publication date."
             self.assertTrue(expect_msg in e.message)
             self.assertEqual(e.to_dict(), {'__all__': expect_msg})
@@ -784,7 +784,7 @@ class InstanceTest(unittest.TestCase):
         t = TestDocument(doc=TestEmbeddedDocument(x=10, y=25, z=15))
         try:
             t.save()
-        except ValidationError, e:
+        except ValidationError as e:
             expect_msg = "Value of z != x + y"
             self.assertTrue(expect_msg in e.message)
             self.assertEqual(e.to_dict(), {'doc': {'__all__': expect_msg}})
@@ -2557,9 +2557,6 @@ class InstanceTest(unittest.TestCase):
                 'ordering': ['+name']
             }
 
-            def __unicode__(self):
-                return self.name
-
             def __str__(self):
                 return self.name
 
@@ -2612,7 +2609,7 @@ class InstanceTest(unittest.TestCase):
                                    ]), "1")
 
         # $Where
-        self.assertEqual(u",".join([str(b) for b in Book.objects.filter(
+        self.assertEqual(",".join([str(b) for b in Book.objects.filter(
                                     __raw__={
                                         "$where": """
                                             function(){
@@ -2989,7 +2986,7 @@ class InstanceTest(unittest.TestCase):
 
             def expand(self):
                 self.flattened_parameter = {}
-                for parameter_name, parameter in self.parameters.iteritems():
+                for parameter_name, parameter in self.parameters.items():
                     parameter.expand()
 
         class NodesSystem(Document):
@@ -2997,7 +2994,7 @@ class InstanceTest(unittest.TestCase):
             nodes = MapField(ReferenceField(Node, dbref=False))
 
             def save(self, *args, **kwargs):
-                for node_name, node in self.nodes.iteritems():
+                for node_name, node in self.nodes.items():
                     node.expand()
                     node.save(*args, **kwargs)
                 super(NodesSystem, self).save(*args, **kwargs)
@@ -3108,7 +3105,7 @@ class InstanceTest(unittest.TestCase):
         p2.name = 'alon2'
         p2.save()
         p3 = Person.objects().only('created_on')[0]
-        self.assertEquals(orig_created_on, p3.created_on)
+        self.assertEqual(orig_created_on, p3.created_on)
 
         class Person(Document):
             created_on = DateTimeField(default=lambda: datetime.utcnow())
@@ -3117,18 +3114,18 @@ class InstanceTest(unittest.TestCase):
 
         p4 = Person.objects()[0]
         p4.save()
-        self.assertEquals(p4.height, 189)
-        self.assertEquals(Person.objects(height=189).count(), 1)
+        self.assertEqual(p4.height, 189)
+        self.assertEqual(Person.objects(height=189).count(), 1)
 
     def test_from_son(self):
         # 771
         class MyPerson(self.Person):
             meta = dict(shard_key=["id"])
         p = MyPerson.from_json('{"name": "name", "age": 27}', created=True)
-        self.assertEquals(p.id, None)
+        self.assertEqual(p.id, None)
         p.id = "12345"  # in case it is not working: "OperationError: Shard Keys are immutable..." will be raised here
         p = MyPerson._from_son({"name": "name", "age": 27}, created=True)
-        self.assertEquals(p.id, None)
+        self.assertEqual(p.id, None)
         p.id = "12345"  # in case it is not working: "OperationError: Shard Keys are immutable..." will be raised here
 
     def test_null_field(self):
@@ -3148,7 +3145,7 @@ class InstanceTest(unittest.TestCase):
         u_from_db = User.objects.get(name='user')
         u_from_db.height = None
         u_from_db.save()
-        self.assertEquals(u_from_db.height, None)
+        self.assertEqual(u_from_db.height, None)
         # 864
         self.assertEqual(u_from_db.str_fld, None)
         self.assertEqual(u_from_db.int_fld, None)
@@ -3162,7 +3159,7 @@ class InstanceTest(unittest.TestCase):
         u.save()
         User.objects(name='user').update_one(set__height=None, upsert=True)
         u_from_db = User.objects.get(name='user')
-        self.assertEquals(u_from_db.height, None)
+        self.assertEqual(u_from_db.height, None)
 
     def test_not_saved_eq(self):
         """Ensure we can compare documents not saved.

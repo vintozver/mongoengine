@@ -1,3 +1,2 @@
 nose
-pymongo>=2.7.1
-six==1.10.0
+pymongo>=3.2

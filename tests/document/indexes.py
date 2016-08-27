@@ -72,7 +72,7 @@ class IndexesTest(unittest.TestCase):
         info = BlogPost.objects._collection.index_information()
         # _id, '-date', 'tags', ('cat', 'date')
         self.assertEqual(len(info), 4)
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         for expected in expected_specs:
             self.assertTrue(expected['fields'] in info)
 
@@ -104,7 +104,7 @@ class IndexesTest(unittest.TestCase):
         # the indices on -date and tags will both contain
         # _cls as first element in the key
         self.assertEqual(len(info), 4)
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         for expected in expected_specs:
             self.assertTrue(expected['fields'] in info)
 
@@ -119,7 +119,7 @@ class IndexesTest(unittest.TestCase):
 
         ExtendedBlogPost.ensure_indexes()
         info = ExtendedBlogPost.objects._collection.index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         for expected in expected_specs:
             self.assertTrue(expected['fields'] in info)
 
@@ -229,7 +229,7 @@ class IndexesTest(unittest.TestCase):
         # Indexes are lazy so use list() to perform query
         list(Person.objects)
         info = Person.objects._collection.index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('rank.title', 1)] in info)
 
     def test_explicit_geo2d_index(self):
@@ -249,7 +249,7 @@ class IndexesTest(unittest.TestCase):
 
         Place.ensure_indexes()
         info = Place._get_collection().index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('location.point', '2d')] in info)
 
     def test_explicit_geo2d_index_embedded(self):
@@ -272,7 +272,7 @@ class IndexesTest(unittest.TestCase):
 
         Place.ensure_indexes()
         info = Place._get_collection().index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('current.location.point', '2d')] in info)
 
     def test_explicit_geosphere_index(self):
@@ -292,7 +292,7 @@ class IndexesTest(unittest.TestCase):
 
         Place.ensure_indexes()
         info = Place._get_collection().index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('location.point', '2dsphere')] in info)
 
     def test_explicit_geohaystack_index(self):
@@ -314,7 +314,7 @@ class IndexesTest(unittest.TestCase):
 
         Place.ensure_indexes()
         info = Place._get_collection().index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('location.point', 'geoHaystack')] in info)
 
     def test_create_geohaystack_index(self):
@@ -326,7 +326,7 @@ class IndexesTest(unittest.TestCase):
 
         Place.create_index({'fields': (')location.point', 'name')}, bucketSize=10)
         info = Place._get_collection().index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('location.point', 'geoHaystack'), ('name', 1)] in info)
 
     def test_dictionary_indexes(self):
@@ -359,7 +359,7 @@ class IndexesTest(unittest.TestCase):
         info = [(value['key'],
                  value.get('unique', False),
                  value.get('sparse', False))
-                for key, value in info.iteritems()]
+                for key, value in info.items()]
         self.assertTrue(([('addDate', -1)], True, True) in info)
 
         BlogPost.drop_collection()
@@ -411,7 +411,7 @@ class IndexesTest(unittest.TestCase):
 
         self.assertEqual(2, User.objects.count())
         info = User.objects._collection.index_information()
-        self.assertEqual(info.keys(), ['_id_'])
+        self.assertEqual(list(info.keys()), ['_id_'])
 
         User.ensure_indexes()
         info = User.objects._collection.index_information()
@@ -560,8 +560,8 @@ class IndexesTest(unittest.TestCase):
 
         BlogPost.drop_collection()
 
-        for i in xrange(0, 10):
-            tags = [("tag %i" % n) for n in xrange(0, i % 2)]
+        for i in range(0, 10):
+            tags = [("tag %i" % n) for n in range(0, i % 2)]
             BlogPost(tags=tags).save()
 
         self.assertEqual(BlogPost.objects.count(), 10)
@@ -570,18 +570,19 @@ class IndexesTest(unittest.TestCase):
         # PyMongo 3.0 bug only, works correctly with 2.X and 3.0.1+ versions
         if pymongo.version != '3.0':
             self.assertEqual(BlogPost.objects.hint([('tags', 1)]).count(), 10)
-
-            self.assertEqual(BlogPost.objects.hint([('ZZ', 1)]).count(), 10)
+            def invalid_hint():
+                BlogPost.objects.hint([('ZZ', 1)]).count()
+            self.assertRaises(pymongo.errors.OperationFailure, invalid_hint)
 
         if pymongo.version >= '2.8':
-            self.assertEqual(BlogPost.objects.hint('tags').count(), 10)
+            self.assertEqual(BlogPost.objects.hint([('tags', 1)]).count(), 10)
         else:
             def invalid_index():
-                BlogPost.objects.hint('tags').next()
+                next(BlogPost.objects.hint('tags'))
             self.assertRaises(TypeError, invalid_index)
 
         def invalid_index_2():
-            return BlogPost.objects.hint(('tags', 1)).next()
+            return next(BlogPost.objects.hint(('tags', 1)))
         self.assertRaises(Exception, invalid_index_2)
 
     def test_unique(self):
@@ -812,7 +813,7 @@ class IndexesTest(unittest.TestCase):
             self.fail('Unbound local error at index + pk definition')
 
         info = BlogPost.objects._collection.index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         index_item = [('_id', 1), ('comments.comment_id', 1)]
         self.assertTrue(index_item in info)
 
@@ -855,7 +856,7 @@ class IndexesTest(unittest.TestCase):
             }
 
         info = MyDoc.objects._collection.index_information()
-        info = [value['key'] for key, value in info.iteritems()]
+        info = [value['key'] for key, value in info.items()]
         self.assertTrue([('provider_ids.foo', 1)] in info)
         self.assertTrue([('provider_ids.bar', 1)] in info)
 

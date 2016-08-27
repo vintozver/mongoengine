@@ -18,7 +18,6 @@ from mongoengine.base import (
 )
 from mongoengine.errors import (InvalidQueryError, InvalidDocumentError,
                                 SaveConditionError)
-from mongoengine.python_support import IS_PYMONGO_3
 from mongoengine.queryset import (OperationError, NotUniqueError,
                                   QuerySet, transform)
 from mongoengine.connection import get_db, DEFAULT_CONNECTION_NAME
@@ -35,7 +34,7 @@ def includes_cls(fields):
 
     first_field = None
     if len(fields):
-        if isinstance(fields[0], basestring):
+        if isinstance(fields[0], str):
             first_field = fields[0]
         elif isinstance(fields[0], (list, tuple)) and len(fields[0]):
             first_field = fields[0][0]
@@ -46,7 +45,7 @@ class InvalidCollectionError(Exception):
     pass
 
 
-class EmbeddedDocument(BaseDocument):
+class EmbeddedDocument(BaseDocument, metaclass=DocumentMetaclass):
     """A :class:`~mongoengine.Document` that isn't stored in its own
     collection.  :class:`~mongoengine.EmbeddedDocument`\ s should be used as
     fields on :class:`~mongoengine.Document`\ s through the
@@ -66,7 +65,6 @@ class EmbeddedDocument(BaseDocument):
     # The __metaclass__ attribute is removed by 2to3 when running with Python3
     # my_metaclass is defined so that metaclass can be queried in Python 2 & 3
     my_metaclass = DocumentMetaclass
-    __metaclass__ = DocumentMetaclass
 
     def __init__(self, *args, **kwargs):
         super(EmbeddedDocument, self).__init__(*args, **kwargs)
@@ -88,7 +86,7 @@ class EmbeddedDocument(BaseDocument):
         self._instance.reload(*args, **kwargs)
 
 
-class Document(BaseDocument):
+class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
     """The base class used for defining the structure and properties of
     collections of documents stored in MongoDB. Inherit from this class, and
     add fields as class attributes to define a document's structure.
@@ -144,7 +142,6 @@ class Document(BaseDocument):
     # The __metaclass__ attribute is removed by 2to3 when running with Python3
     # my_metaclass is defined so that metaclass can be queried in Python 2 & 3
     my_metaclass = TopLevelDocumentMetaclass
-    __metaclass__ = TopLevelDocumentMetaclass
 
     __slots__ = ('__objects',)
 
@@ -390,17 +387,17 @@ class Document(BaseDocument):
                     kwargs.update(cascade_kwargs)
                 kwargs['_refs'] = _refs
                 self.cascade_save(**kwargs)
-        except pymongo.errors.DuplicateKeyError, err:
-            message = u'Tried to save duplicate unique keys (%s)'
-            raise NotUniqueError(message % unicode(err))
-        except pymongo.errors.OperationFailure, err:
+        except pymongo.errors.DuplicateKeyError as err:
+            message = 'Tried to save duplicate unique keys (%s)'
+            raise NotUniqueError(message % str(err))
+        except pymongo.errors.OperationFailure as err:
             message = 'Could not save document (%s)'
-            if re.match('^E1100[01] duplicate key', unicode(err)):
+            if re.match('^E1100[01] duplicate key', str(err)):
                 # E11000 - duplicate key error index
                 # E11001 - duplicate key on update
-                message = u'Tried to save duplicate unique keys (%s)'
-                raise NotUniqueError(message % unicode(err))
-            raise OperationError(message % unicode(err))
+                message = 'Tried to save duplicate unique keys (%s)'
+                raise NotUniqueError(message % str(err))
+            raise OperationError(message % str(err))
         id_field = self._meta['id_field']
         if created or id_field not in self._meta.get('shard_key', []):
             self[id_field] = self._fields[id_field].to_python(object_id)
@@ -503,15 +500,15 @@ class Document(BaseDocument):
 
         # Delete FileFields separately 
         FileField = _import_class('FileField')
-        for name, field in self._fields.iteritems():
+        for name, field in self._fields.items():
             if isinstance(field, FileField): 
                 getattr(self, name).delete()
 
         try:
             self._qs.filter(
                 **self._object_key).delete(write_concern=write_concern, _from_doc_delete=True)
-        except pymongo.errors.OperationFailure, err:
-            message = u'Could not delete document (%s)' % err.message
+        except pymongo.errors.OperationFailure as err:
+            message = 'Could not delete document (%s)' % err.message
             raise OperationError(message)
         signals.post_delete.send(self.__class__, document=self, **signal_kwargs)
 
@@ -707,18 +704,13 @@ class Document(BaseDocument):
         index_spec = index_spec.copy()
         fields = index_spec.pop('fields')
         drop_dups = kwargs.get('drop_dups', False)
-        if IS_PYMONGO_3 and drop_dups:
+        if drop_dups:
             msg = "drop_dups is deprecated and is removed when using PyMongo 3+."
             warnings.warn(msg, DeprecationWarning)
-        elif not IS_PYMONGO_3:
-            index_spec['drop_dups'] = drop_dups
         index_spec['background'] = background
         index_spec.update(kwargs)
 
-        if IS_PYMONGO_3:
-            return cls._get_collection().create_index(fields, **index_spec)
-        else:
-            return cls._get_collection().ensure_index(fields, **index_spec)
+        return cls._get_collection().create_index(fields, **index_spec)
 
     @classmethod
     def ensure_index(cls, key_or_list, drop_dups=False, background=False,
@@ -733,11 +725,9 @@ class Document(BaseDocument):
         :param drop_dups: Was removed/ignored with MongoDB >2.7.5. The value
             will be removed if PyMongo3+ is used
         """
-        if IS_PYMONGO_3 and drop_dups:
+        if drop_dups:
             msg = "drop_dups is deprecated and is removed when using PyMongo 3+."
             warnings.warn(msg, DeprecationWarning)
-        elif not IS_PYMONGO_3:
-            kwargs.update({'drop_dups': drop_dups})
         return cls.create_index(key_or_list, background=background, **kwargs)
 
     @classmethod
@@ -753,7 +743,7 @@ class Document(BaseDocument):
         drop_dups = cls._meta.get('index_drop_dups', False)
         index_opts = cls._meta.get('index_opts') or {}
         index_cls = cls._meta.get('index_cls', True)
-        if IS_PYMONGO_3 and drop_dups:
+        if drop_dups:
             msg = "drop_dups is deprecated and is removed when using PyMongo 3+."
             warnings.warn(msg, DeprecationWarning)
 
@@ -784,11 +774,7 @@ class Document(BaseDocument):
                 if 'cls' in opts:
                     del opts['cls']
 
-                if IS_PYMONGO_3:
-                    collection.create_index(fields, background=background, **opts)
-                else:
-                    collection.ensure_index(fields, background=background,
-                                            drop_dups=drop_dups, **opts)
+                collection.create_index(fields, background=background, **opts)
 
         # If _cls is being used (for polymorphism), it needs an index,
         # only if another index doesn't begin with _cls
@@ -800,11 +786,7 @@ class Document(BaseDocument):
             if 'cls' in index_opts:
                 del index_opts['cls']
 
-            if IS_PYMONGO_3:
-                collection.create_index('_cls', background=background,
-                                        **index_opts)
-            else:
-                collection.ensure_index('_cls', background=background,
+            collection.create_index('_cls', background=background,
                                         **index_opts)
 
     @classmethod
@@ -861,11 +843,11 @@ class Document(BaseDocument):
                     indexes.append(index)
 
         # finish up by appending { '_id': 1 } and { '_cls': 1 }, if needed
-        if [(u'_id', 1)] not in indexes:
-            indexes.append([(u'_id', 1)])
+        if [('_id', 1)] not in indexes:
+            indexes.append([('_id', 1)])
         if (cls._meta.get('index_cls', True) and
                 cls._meta.get('allow_inheritance', ALLOW_INHERITANCE) is True):
-            indexes.append([(u'_cls', 1)])
+            indexes.append([('_cls', 1)])
 
         return indexes
 
@@ -882,19 +864,19 @@ class Document(BaseDocument):
         extra = [index for index in existing if index not in required]
 
         # if { _cls: 1 } is missing, make sure it's *really* necessary
-        if [(u'_cls', 1)] in missing:
+        if [('_cls', 1)] in missing:
             cls_obsolete = False
             for index in existing:
                 if includes_cls(index) and index not in extra:
                     cls_obsolete = True
                     break
             if cls_obsolete:
-                missing.remove([(u'_cls', 1)])
+                missing.remove([('_cls', 1)])
 
         return {'missing': missing, 'extra': extra}
 
 
-class DynamicDocument(Document):
+class DynamicDocument(Document, metaclass=TopLevelDocumentMetaclass):
     """A Dynamic Document class allowing flexible, expandable and uncontrolled
     schemas.  As a :class:`~mongoengine.Document` subclass, acts in the same
     way as an ordinary document but has expando style properties.  Any data
@@ -911,7 +893,6 @@ class DynamicDocument(Document):
     # The __metaclass__ attribute is removed by 2to3 when running with Python3
     # my_metaclass is defined so that metaclass can be queried in Python 2 & 3
     my_metaclass = TopLevelDocumentMetaclass
-    __metaclass__ = TopLevelDocumentMetaclass
 
     _dynamic = True
 
@@ -925,7 +906,7 @@ class DynamicDocument(Document):
             super(DynamicDocument, self).__delattr__(*args, **kwargs)
 
 
-class DynamicEmbeddedDocument(EmbeddedDocument):
+class DynamicEmbeddedDocument(EmbeddedDocument, metaclass=DocumentMetaclass):
     """A Dynamic Embedded Document class allowing flexible, expandable and
     uncontrolled schemas. See :class:`~mongoengine.DynamicDocument` for more
     information about dynamic documents.
@@ -934,7 +915,6 @@ class DynamicEmbeddedDocument(EmbeddedDocument):
     # The __metaclass__ attribute is removed by 2to3 when running with Python3
     # my_metaclass is defined so that metaclass can be queried in Python 2 & 3
     my_metaclass = DocumentMetaclass
-    __metaclass__ = DocumentMetaclass
 
     _dynamic = True
 

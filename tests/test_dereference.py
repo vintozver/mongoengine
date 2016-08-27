@@ -28,7 +28,7 @@ class FieldTest(unittest.TestCase):
         User.drop_collection()
         Group.drop_collection()
 
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             user = User(name='user %s' % i)
             user.save()
 
@@ -86,7 +86,7 @@ class FieldTest(unittest.TestCase):
         User.drop_collection()
         Group.drop_collection()
 
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             user = User(name='user %s' % i)
             user.save()
 
@@ -158,7 +158,7 @@ class FieldTest(unittest.TestCase):
         User.drop_collection()
         Group.drop_collection()
 
-        for i in xrange(1, 26):
+        for i in range(1, 26):
             user = User(name='user %s' % i)
             user.save()
 
@@ -435,7 +435,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i)
             a.save()
 
@@ -526,7 +526,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i)
             a.save()
 
@@ -609,7 +609,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             user = User(name='user %s' % i)
             user.save()
             members.append(user)
@@ -629,7 +629,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 2)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue(isinstance(m, User))
 
         # Document select_related
@@ -642,7 +642,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 2)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue(isinstance(m, User))
 
        # Queryset select_related
@@ -656,7 +656,7 @@ class FieldTest(unittest.TestCase):
                 [m for m in group_obj.members]
                 self.assertEqual(q, 2)
 
-                for k, m in group_obj.members.iteritems():
+                for k, m in group_obj.members.items():
                     self.assertTrue(isinstance(m, User))
 
         User.drop_collection()
@@ -682,7 +682,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i)
             a.save()
 
@@ -711,7 +711,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 4)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue('User' in m.__class__.__name__)
 
         # Document select_related
@@ -727,7 +727,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 4)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue('User' in m.__class__.__name__)
 
         # Queryset select_related
@@ -744,7 +744,7 @@ class FieldTest(unittest.TestCase):
                 [m for m in group_obj.members]
                 self.assertEqual(q, 4)
 
-                for k, m in group_obj.members.iteritems():
+                for k, m in group_obj.members.items():
                     self.assertTrue('User' in m.__class__.__name__)
 
         Group.objects.delete()
@@ -778,7 +778,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i)
             a.save()
 
@@ -802,7 +802,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 2)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue(isinstance(m, UserA))
 
         # Document select_related
@@ -818,7 +818,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 2)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue(isinstance(m, UserA))
 
         # Queryset select_related
@@ -835,7 +835,7 @@ class FieldTest(unittest.TestCase):
                 [m for m in group_obj.members]
                 self.assertEqual(q, 2)
 
-                for k, m in group_obj.members.iteritems():
+                for k, m in group_obj.members.items():
                     self.assertTrue(isinstance(m, UserA))
 
         UserA.drop_collection()
@@ -861,7 +861,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i)
             a.save()
 
@@ -890,7 +890,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 4)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue('User' in m.__class__.__name__)
 
         # Document select_related
@@ -906,7 +906,7 @@ class FieldTest(unittest.TestCase):
             [m for m in group_obj.members]
             self.assertEqual(q, 4)
 
-            for k, m in group_obj.members.iteritems():
+            for k, m in group_obj.members.items():
                 self.assertTrue('User' in m.__class__.__name__)
 
         # Queryset select_related
@@ -923,7 +923,7 @@ class FieldTest(unittest.TestCase):
                 [m for m in group_obj.members]
                 self.assertEqual(q, 4)
 
-                for k, m in group_obj.members.iteritems():
+                for k, m in group_obj.members.items():
                     self.assertTrue('User' in m.__class__.__name__)
 
         Group.objects.delete()
@@ -1098,7 +1098,7 @@ class FieldTest(unittest.TestCase):
         User.drop_collection()
         Group.drop_collection()
 
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             User(name='user %s' % i).save()
 
         Group(name="Test", members=User.objects).save()
@@ -1127,7 +1127,7 @@ class FieldTest(unittest.TestCase):
         User.drop_collection()
         Group.drop_collection()
 
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             User(name='user %s' % i).save()
 
         Group(name="Test", members=User.objects).save()
@@ -1164,7 +1164,7 @@ class FieldTest(unittest.TestCase):
         Group.drop_collection()
 
         members = []
-        for i in xrange(1, 51):
+        for i in range(1, 51):
             a = UserA(name='User A %s' % i).save()
             b = UserB(name='User B %s' % i).save()
             c = UserC(name='User C %s' % i).save()
@@ -1227,7 +1227,7 @@ class FieldTest(unittest.TestCase):
         BrandGroup.drop_collection()
 
         brand1 = Brand(title="Moschino").save()
-        brand2 = Brand(title=u"Денис Симачёв").save()
+        brand2 = Brand(title="Денис Симачёв").save()
 
         BrandGroup(title="top_brands", brands=[brand1, brand2]).save()
         brand_groups = BrandGroup.objects().all()

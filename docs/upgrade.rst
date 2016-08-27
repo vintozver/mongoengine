@@ -75,7 +75,7 @@ inherited classes like so: ::
 
     # 4. Remove indexes
     info = collection.index_information()
-    indexes_to_drop = [key for key, value in info.iteritems()
+    indexes_to_drop = [key for key, value in info.items()
                        if '_types' in dict(value['key'])]
     for index in indexes_to_drop:
         collection.drop_index(index)
@@ -109,7 +109,7 @@ the case and the data is set only in the ``document._data`` dictionary: ::
 
     # 0.7
     >>> cat.size
-    u'small'
+    'small'
 
     # 0.8
     >>> cat.size
@@ -530,17 +530,17 @@ Alternatively, you can rename your collections eg ::
             if old_style_name in existing:
                 if new_style_name in existing:
                     failure = True
-                    print "FAILED to rename: %s to %s (already exists)" % (
-                        old_style_name, new_style_name)
+                    print("FAILED to rename: %s to %s (already exists)" % (
+                        old_style_name, new_style_name))
                 else:
                     db[old_style_name].rename(new_style_name)
-                    print "Renamed:  %s to %s" % (old_style_name,
-                                                  new_style_name)
+                    print("Renamed:  %s to %s" % (old_style_name,
+                                                  new_style_name))
 
         if failure:
-            print "Upgrading  collection names failed"
+            print("Upgrading  collection names failed")
         else:
-            print "Upgraded collection names"
+            print("Upgraded collection names")
 
 
 mongodb 1.8 > 2.0 +

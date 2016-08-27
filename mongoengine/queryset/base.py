@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import itertools
@@ -13,6 +13,7 @@ from bson import json_util
 import pymongo
 import pymongo.errors
 from pymongo.common import validate_read_preference
+from pymongo.collection import ReturnDocument
 
 from mongoengine import signals
 from mongoengine.connection import get_db
@@ -21,13 +22,9 @@ from mongoengine.common import _import_class
 from mongoengine.base.common import get_document
 from mongoengine.errors import (OperationError, NotUniqueError,
                                 InvalidQueryError, LookUpError)
-from mongoengine.python_support import IS_PYMONGO_3
 from mongoengine.queryset import transform
 from mongoengine.queryset.field_list import QueryFieldList
 from mongoengine.queryset.visitor import Q, QNode
-
-if IS_PYMONGO_3:
-    from pymongo.collection import ReturnDocument
 
 
 __all__ = ('BaseQuerySet', 'DO_NOTHING', 'NULLIFY', 'CASCADE', 'DENY', 'PULL')
@@ -135,7 +132,7 @@ class BaseQuerySet(object):
                 queryset._skip, queryset._limit = key.start, key.stop
                 if key.start and key.stop:
                     queryset._limit = key.stop - key.start
-            except IndexError, err:
+            except IndexError as err:
                 # PyMongo raises an error if key.start == key.stop, catch it,
                 # bin it, kill it.
                 start = key.start or 0
@@ -173,7 +170,7 @@ class BaseQuerySet(object):
         queryset = self.order_by()
         return False if queryset.first() is None else True
 
-    def __nonzero__(self):
+    def __bool__(self):
         """ Avoid to open all records in an if stmt in Py2. """
 
         return self._has_data()
@@ -235,18 +232,18 @@ class BaseQuerySet(object):
         queryset = queryset.filter(*q_objs, **query)
 
         try:
-            result = queryset.next()
+            result = next(queryset)
         except StopIteration:
             msg = ("%s matching query does not exist."
                    % queryset._document._class_name)
             raise queryset._document.DoesNotExist(msg)
         try:
-            queryset.next()
+            next(queryset)
         except StopIteration:
             return result
 
         queryset.rewind()
-        message = u'%d items returned, instead of 1' % queryset.count()
+        message = '%d items returned, instead of 1' % queryset.count()
         raise queryset._document.MultipleObjectsReturned(message)
 
     def create(self, **kwargs):
@@ -292,9 +289,6 @@ class BaseQuerySet(object):
         """
         Document = _import_class('Document')
 
-        if write_concern is None:
-            write_concern = {}
-
         docs = doc_or_docs
         return_one = False
         if isinstance(docs, Document) or issubclass(docs.__class__, Document):
@@ -316,18 +310,20 @@ class BaseQuerySet(object):
 
         raw = [doc.to_mongo() for doc in docs]
         try:
-            ids = self._collection.insert(raw, **write_concern)
-        except pymongo.errors.DuplicateKeyError, err:
+            ids = self._collection.with_options(
+                write_concern=pymongo.write_concern.WriteConcern(**(write_concern or {}))
+            ).insert_many(raw).inserted_ids
+        except pymongo.errors.DuplicateKeyError as err:
             message = 'Could not save document (%s)'
-            raise NotUniqueError(message % unicode(err))
-        except pymongo.errors.OperationFailure, err:
+            raise NotUniqueError(message % str(err))
+        except pymongo.errors.OperationFailure as err:
             message = 'Could not save document (%s)'
-            if re.match('^E1100[01] duplicate key', unicode(err)):
+            if re.match('^E1100[01] duplicate key', str(err)):
                 # E11000 - duplicate key error index
                 # E11001 - duplicate key on update
-                message = u'Tried to save duplicate unique keys (%s)'
-                raise NotUniqueError(message % unicode(err))
-            raise OperationError(message % unicode(err))
+                message = 'Tried to save duplicate unique keys (%s)'
+                raise NotUniqueError(message % str(err))
+            raise OperationError(message % str(err))
 
         if not load_bulk:
             signals.post_bulk_insert.send(
@@ -472,13 +468,13 @@ class BaseQuerySet(object):
                 return result
             elif result:
                 return result['n']
-        except pymongo.errors.DuplicateKeyError, err:
-            raise NotUniqueError(u'Update failed (%s)' % unicode(err))
-        except pymongo.errors.OperationFailure, err:
-            if unicode(err) == u'multi not coded yet':
-                message = u'update() method requires MongoDB 1.1.3+'
+        except pymongo.errors.DuplicateKeyError as err:
+            raise NotUniqueError('Update failed (%s)' % str(err))
+        except pymongo.errors.OperationFailure as err:
+            if str(err) == 'multi not coded yet':
+                message = 'update() method requires MongoDB 1.1.3+'
                 raise OperationError(message)
-            raise OperationError(u'Update failed (%s)' % unicode(err))
+            raise OperationError('Update failed (%s)' % str(err))
 
     def upsert_one(self, write_concern=None, **update):
         """Overwrite or add the first document matched by the query.
@@ -556,35 +552,29 @@ class BaseQuerySet(object):
 
         queryset = self.clone()
         query = queryset._query
-        if not IS_PYMONGO_3 or not remove:
+        if not remove:
             update = transform.update(queryset._document, **update)
         sort = queryset._ordering
 
         try:
-            if IS_PYMONGO_3:
-                if full_response:
-                    msg = "With PyMongo 3+, it is not possible anymore to get the full response."
-                    warnings.warn(msg, DeprecationWarning)
-                if remove:
-                    result = queryset._collection.find_one_and_delete(
-                        query, sort=sort, **self._cursor_args)
-                else:
-                    if new:
-                        return_doc = ReturnDocument.AFTER
-                    else:
-                        return_doc = ReturnDocument.BEFORE
-                    result = queryset._collection.find_one_and_update(
-                        query, update, upsert=upsert, sort=sort, return_document=return_doc,
-                        **self._cursor_args)
-
+            if full_response:
+                msg = "With PyMongo 3+, it is not possible anymore to get the full response."
+                warnings.warn(msg, DeprecationWarning)
+            if remove:
+                result = queryset._collection.find_one_and_delete(
+                    query, sort=sort, **self._cursor_args)
             else:
-                result = queryset._collection.find_and_modify(
-                    query, update, upsert=upsert, sort=sort, remove=remove, new=new,
-                    full_response=full_response, **self._cursor_args)
-        except pymongo.errors.DuplicateKeyError, err:
-            raise NotUniqueError(u"Update failed (%s)" % err)
-        except pymongo.errors.OperationFailure, err:
-            raise OperationError(u"Update failed (%s)" % err)
+                if new:
+                    return_doc = ReturnDocument.AFTER
+                else:
+                    return_doc = ReturnDocument.BEFORE
+                result = queryset._collection.find_one_and_update(
+                    query, update, upsert=upsert, sort=sort, return_document=return_doc,
+                    **self._cursor_args)
+        except pymongo.errors.DuplicateKeyError as err:
+            raise NotUniqueError("Update failed (%s)" % err)
+        except pymongo.errors.OperationFailure as err:
+            raise OperationError("Update failed (%s)" % err)
 
         if full_response:
             if result["value"] is not None:
@@ -816,7 +806,7 @@ class BaseQuerySet(object):
         .. versionchanged:: 0.5 - Added subfield support
         """
         fields = dict([(f, QueryFieldList.ONLY) for f in fields])
-        self.only_fields = fields.keys()
+        self.only_fields = list(fields.keys())
         return self.fields(True, **fields)
 
     def exclude(self, *fields):
@@ -922,9 +912,8 @@ class BaseQuerySet(object):
         ..versionchanged:: 0.5 - made chainable
         .. deprecated:: Ignored with PyMongo 3+
         """
-        if IS_PYMONGO_3:
-            msg = "snapshot is deprecated as it has no impact when using PyMongo 3+."
-            warnings.warn(msg, DeprecationWarning)
+        msg = "snapshot is deprecated as it has no impact when using PyMongo 3+."
+        warnings.warn(msg, DeprecationWarning)
         queryset = self.clone()
         queryset._snapshot = enabled
         return queryset
@@ -948,9 +937,8 @@ class BaseQuerySet(object):
 
         .. deprecated:: Ignored with PyMongo 3+
         """
-        if IS_PYMONGO_3:
-            msg = "slave_okay is deprecated as it has no impact when using PyMongo 3+."
-            warnings.warn(msg, DeprecationWarning)
+        msg = "slave_okay is deprecated as it has no impact when using PyMongo 3+."
+        warnings.warn(msg, DeprecationWarning)
         queryset = self.clone()
         queryset._slave_okay = enabled
         return queryset
@@ -1100,13 +1088,13 @@ class BaseQuerySet(object):
         map_f_scope = {}
         if isinstance(map_f, Code):
             map_f_scope = map_f.scope
-            map_f = unicode(map_f)
+            map_f = str(map_f)
         map_f = Code(queryset._sub_js_fields(map_f), map_f_scope)
 
         reduce_f_scope = {}
         if isinstance(reduce_f, Code):
             reduce_f_scope = reduce_f.scope
-            reduce_f = unicode(reduce_f)
+            reduce_f = str(reduce_f)
         reduce_f_code = queryset._sub_js_fields(reduce_f)
         reduce_f = Code(reduce_f_code, reduce_f_scope)
 
@@ -1116,7 +1104,7 @@ class BaseQuerySet(object):
             finalize_f_scope = {}
             if isinstance(finalize_f, Code):
                 finalize_f_scope = finalize_f.scope
-                finalize_f = unicode(finalize_f)
+                finalize_f = str(finalize_f)
             finalize_f_code = queryset._sub_js_fields(finalize_f)
             finalize_f = Code(finalize_f_code, finalize_f_scope)
             mr_args['finalize'] = finalize_f
@@ -1132,7 +1120,7 @@ class BaseQuerySet(object):
         else:
             map_reduce_function = 'map_reduce'
 
-            if isinstance(output, basestring):
+            if isinstance(output, str):
                 mr_args['out'] = output
 
             elif isinstance(output, dict):
@@ -1253,12 +1241,7 @@ class BaseQuerySet(object):
         if isinstance(field_instances[-1], ListField):
             pipeline.insert(1, {'$unwind': '$' + field})
 
-        result = self._document._get_collection().aggregate(pipeline)
-        if IS_PYMONGO_3:
-            result = tuple(result)
-        else:
-            result = result.get('result')
-
+        result = tuple(self._document._get_collection().aggregate(pipeline))
         if result:
             return result[0]['total']
         return 0
@@ -1283,11 +1266,7 @@ class BaseQuerySet(object):
         if isinstance(field_instances[-1], ListField):
             pipeline.insert(1, {'$unwind': '$' + field})
 
-        result = self._document._get_collection().aggregate(pipeline)
-        if IS_PYMONGO_3:
-            result = tuple(result)
-        else:
-            result = result.get('result')
+        result = tuple(self._document._get_collection().aggregate(pipeline))
         if result:
             return result[0]['total']
         return 0
@@ -1321,13 +1300,13 @@ class BaseQuerySet(object):
 
     # Iterator helpers
 
-    def next(self):
+    def __next__(self):
         """Wrap the result in a :class:`~mongoengine.Document` object.
         """
         if self._limit == 0 or self._none:
             raise StopIteration
 
-        raw_doc = self._cursor.next()
+        raw_doc = next(self._cursor)
         if self._as_pymongo:
             return self._get_as_pymongo(raw_doc)
         doc = self._document._from_son(raw_doc,
@@ -1358,26 +1337,15 @@ class BaseQuerySet(object):
 
     @property
     def _cursor_args(self):
-        if not IS_PYMONGO_3:
-            fields_name = 'fields'
-            cursor_args = {
-                'timeout': self._timeout,
-                'snapshot': self._snapshot
-            }
-            if self._read_preference is not None:
-                cursor_args['read_preference'] = self._read_preference
-            else:
-                cursor_args['slave_okay'] = self._slave_okay
-        else:
-            fields_name = 'projection'
-            # snapshot is not handled at all by PyMongo 3+
-            # TODO: evaluate similar possibilities using modifiers
-            if self._snapshot:
-                msg = "The snapshot option is not anymore available with PyMongo 3+"
-                warnings.warn(msg, DeprecationWarning)
-            cursor_args = {
-                'no_cursor_timeout': not self._timeout
-            }
+        fields_name = 'projection'
+        # snapshot is not handled at all by PyMongo 3+
+        # TODO: evaluate similar possibilities using modifiers
+        if self._snapshot:
+            msg = "The snapshot option is not longer available with PyMongo 3+"
+            warnings.warn(msg, DeprecationWarning)
+        cursor_args = {
+            'no_cursor_timeout': not self._timeout
+        }
         if self._loaded_fields:
             cursor_args[fields_name] = self._loaded_fields.as_dict()
 
@@ -1396,7 +1364,7 @@ class BaseQuerySet(object):
             # In PyMongo 3+, we define the read preference on a collection
             # level, not a cursor level. Thus, we need to get a cloned
             # collection object using `with_options` first.
-            if IS_PYMONGO_3 and self._read_preference is not None:
+            if self._read_preference is not None:
                 self._cursor_obj = self._collection\
                     .with_options(read_preference=self._read_preference)\
                     .find(self._query, **self._cursor_args)
@@ -1555,13 +1523,13 @@ class BaseQuerySet(object):
             }
         """
         total, data, types = self.exec_js(freq_func, field)
-        values = dict([(types.get(k), int(v)) for k, v in data.iteritems()])
+        values = dict([(types.get(k), int(v)) for k, v in data.items()])
 
         if normalize:
             values = dict([(k, float(v) / total) for k, v in values.items()])
 
         frequencies = {}
-        for k, v in values.iteritems():
+        for k, v in values.items():
             if isinstance(k, float):
                 if int(k) == k:
                     k = int(k)
@@ -1583,7 +1551,7 @@ class BaseQuerySet(object):
                 field = ".".join(f.db_field for f in
                                  document._lookup_field(field.split('.')))
                 ret.append(field)
-            except LookUpError, err:
+            except LookUpError as err:
                 found = False
                 for subdoc in subclasses:
                     try:
@@ -1660,7 +1628,7 @@ class BaseQuerySet(object):
 
             if isinstance(data, dict):
                 new_data = {}
-                for key, value in data.iteritems():
+                for key, value in data.items():
                     new_path = '%s.%s' % (path, key) if path else key
 
                     if all_fields:
@@ -1707,7 +1675,7 @@ class BaseQuerySet(object):
             field_name = match.group(1).split('.')
             fields = self._document._lookup_field(field_name)
             # Substitute the correct name for the field into the javascript
-            return u'["%s"]' % fields[-1].db_field
+            return '["%s"]' % fields[-1].db_field
 
         def field_path_sub(match):
             # Extract just the field name, and look up the field objects
@@ -1716,8 +1684,8 @@ class BaseQuerySet(object):
             # Substitute the correct name for the field into the javascript
             return ".".join([f.db_field for f in fields])
 
-        code = re.sub(u'\[\s*~([A-z_][A-z_0-9.]+?)\s*\]', field_sub, code)
-        code = re.sub(u'\{\{\s*~([A-z_][A-z_0-9.]+?)\s*\}\}', field_path_sub,
+        code = re.sub('\[\s*~([A-z_][A-z_0-9.]+?)\s*\]', field_sub, code)
+        code = re.sub('\{\{\s*~([A-z_][A-z_0-9.]+?)\s*\}\}', field_path_sub,
                       code)
         return code
 

@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from mongoengine.python_support import txt_type
-
 
 __all__ = ('NotRegistered', 'InvalidDocumentError', 'LookUpError',
            'DoesNotExist', 'MultipleObjectsReturned', 'InvalidQueryError',
@@ -77,7 +75,7 @@ class ValidationError(AssertionError):
         self.message = message
 
     def __str__(self):
-        return txt_type(self.message)
+        return str(self.message)
 
     def __repr__(self):
         return '%s(%s,)' % (self.__class__.__name__, self.message)
@@ -112,12 +110,12 @@ class ValidationError(AssertionError):
             if not source:
                 return errors_dict
             if isinstance(source, dict):
-                for field_name, error in source.iteritems():
+                for field_name, error in source.items():
                     errors_dict[field_name] = build_dict(error)
             elif isinstance(source, ValidationError) and source.errors:
                 return build_dict(source.errors)
             else:
-                return unicode(source)
+                return str(source)
             return errors_dict
 
         if not self.errors:
@@ -131,13 +129,12 @@ class ValidationError(AssertionError):
             if isinstance(value, list):
                 value = ' '.join([generate_key(k) for k in value])
             elif isinstance(value, dict):
-                value = ' '.join(
-                    [generate_key(v, k) for k, v in value.iteritems()])
+                value = ' '.join([generate_key(v, k) for k, v in value.items()])
 
             results = "%s.%s" % (prefix, value) if prefix else value
             return results
 
         error_dict = defaultdict(list)
-        for k, v in self.to_dict().iteritems():
+        for k, v in self.to_dict().items():
             error_dict[generate_key(v)].append(k)
-        return ' '.join(["%s: %s" % (k, v) for k, v in error_dict.iteritems()])
+        return ' '.join(["%s: %s" % (k, v) for k, v in error_dict.items()])

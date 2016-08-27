@@ -29,7 +29,7 @@ class SignalTests(unittest.TestCase):
             id = SequenceField(primary_key=True)
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
             @classmethod
@@ -58,7 +58,7 @@ class SignalTests(unittest.TestCase):
 
             @classmethod
             def post_save(cls, sender, document, **kwargs):
-                dirty_keys = document._delta()[0].keys() + document._delta()[1].keys()
+                dirty_keys = list(document._delta()[0].keys()) + list(document._delta()[1].keys())
                 signal_output.append('post_save signal, %s' % document)
                 signal_output.append('post_save dirty keys, %s' % dirty_keys)
                 if kwargs.pop('created', False):
@@ -99,7 +99,7 @@ class SignalTests(unittest.TestCase):
 
             name = StringField()
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.name
 
             @classmethod
@@ -134,7 +134,7 @@ class SignalTests(unittest.TestCase):
             content = StringField()
             active = BooleanField(default=False)
 
-            def __unicode__(self):
+            def __str__(self):
                 return self.title
 
             @classmethod
