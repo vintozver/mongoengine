@@ -411,7 +411,7 @@ class IndexesTest(unittest.TestCase):
 
         self.assertEqual(2, User.objects.count())
         info = User.objects._collection.index_information()
-        self.assertEqual(info.keys(), ['_id_'])
+        self.assertEqual(list(info.keys()), ['_id_'])
 
         User.ensure_indexes()
         info = User.objects._collection.index_information()
@@ -570,8 +570,9 @@ class IndexesTest(unittest.TestCase):
         # PyMongo 3.0 bug only, works correctly with 2.X and 3.0.1+ versions
         if pymongo.version != '3.0':
             self.assertEqual(BlogPost.objects.hint([('tags', 1)]).count(), 10)
-
-            self.assertEqual(BlogPost.objects.hint([('ZZ', 1)]).count(), 10)
+            def invalid_hint():
+                BlogPost.objects.hint([('ZZ', 1)]).count()
+            self.assertRaises(pymongo.errors.OperationFailure, invalid_hint)
 
         if pymongo.version >= '2.8':
             self.assertEqual(BlogPost.objects.hint('tags').count(), 10)

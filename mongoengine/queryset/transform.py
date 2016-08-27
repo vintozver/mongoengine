@@ -143,7 +143,7 @@ def query(_doc_cls=None, **kwargs):
                     # PyMongo 3+ and MongoDB < 2.6
                     near_embedded = False
                     for near_op in ('$near', '$nearSphere'):
-                        if isinstance(value_dict.get(near_op), dict) and get_connection().max_wire_version > 1:
+                        if isinstance(value_dict.get(near_op), dict):
                             value_son[near_op] = SON(value_son[near_op])
                             if '$maxDistance' in value_dict:
                                 value_son[near_op][

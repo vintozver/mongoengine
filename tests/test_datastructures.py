@@ -58,9 +58,9 @@ class TestStrictDict(unittest.TestCase):
 
     def test_items(self):
         d = self.dtype(a=1)
-        self.assertEqual(d.items(), [('a', 1)])
+        self.assertEqual(list(d.items()), [('a', 1)])
         d = self.dtype(a=1, b=2)
-        self.assertEqual(d.items(), [('a', 1), ('b', 2)])
+        self.assertEqual(list(d.items()), [('a', 1), ('b', 2)])
 
     def test_mappings_protocol(self):
         d = self.dtype(a=1, b=2)

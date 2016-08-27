@@ -72,7 +72,7 @@ class BaseDocument(object):
         # if so raise an Exception.
         if not self._dynamic and (self._meta.get('strict', True) or _created):
             for var in values.keys():
-                if var not in self._fields.keys() + ['id', 'pk', '_cls', '_text_score']:
+                if var not in (list(self._fields.keys()) + ['id', 'pk', '_cls', '_text_score']):
                     msg = (
                         "The field '{0}' does not exist on the document '{1}'"
                     ).format(var, self._class_name)
@@ -627,7 +627,7 @@ class BaseDocument(object):
                 del set_data['_id']
 
         # Determine if any changed items were actually unset.
-        for path, value in set_data.items():
+        for path, value in list(set_data.items()):
             if value or isinstance(value, (numbers.Number, bool)):
                 continue
 

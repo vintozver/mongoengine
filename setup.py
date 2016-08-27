@@ -48,7 +48,6 @@ CLASSIFIERS = [
 ]
 
 extra_opts = {"packages": find_packages(exclude=["tests", "tests.*"])}
-extra_opts['use_2to3'] = True
 extra_opts['tests_require'] = ['nose', 'rednose', 'coverage==3.7.1', 'blinker', 'Pillow>=2.0.0', 'python-dateutil']
 if "test" in sys.argv or "nosetests" in sys.argv:
     extra_opts['packages'] = find_packages()
