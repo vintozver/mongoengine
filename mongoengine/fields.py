@@ -3,7 +3,7 @@ import decimal
 import itertools
 import re
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import uuid
 import warnings
 from operator import itemgetter
@@ -152,8 +152,8 @@ class URLField(StringField):
                 "and performance issues. Accordingly, it has been deprecated.",
                 DeprecationWarning)
             try:
-                request = urllib2.Request(value)
-                urllib2.urlopen(request)
+                request = urllib.request.Request(value)
+                urllib.request.urlopen(request)
             except Exception as e:
                 self.error('This URL appears to be a broken link: %s' % e)
 
@@ -493,7 +493,7 @@ class ComplexDateTimeField(StringField):
         >>> ComplexDateTimeField()._convert_from_string(a)
         datetime.datetime(2011, 6, 8, 20, 26, 24, 92284)
         """
-        values = map(int, data.split(self.separator))
+        values = list(map(int, data.split(self.separator)))
         return datetime.datetime(*values)
 
     def __get__(self, instance, owner):
@@ -1330,7 +1330,7 @@ class GridFSProxy(object):
     def __get__(self, instance, value):
         return self
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.grid_id)
 
     def __getstate__(self):

@@ -112,7 +112,7 @@ class QuerySetTest(unittest.TestCase):
         # Use a query to filter the people found to just person1
         people = self.Person.objects(age=20)
         self.assertEqual(people.count(), 1)
-        person = people.next()
+        person = next(people)
         self.assertEqual(person.name, "User A")
         self.assertEqual(person.age, 20)
 
@@ -2166,10 +2166,10 @@ class QuerySetTest(unittest.TestCase):
         results = list(results)
         self.assertEqual(len(results), 4)
 
-        music = list(filter(lambda r: r.key == "music", results))[0]
+        music = list([r for r in results if r.key == "music"])[0]
         self.assertEqual(music.value, 2)
 
-        film = list(filter(lambda r: r.key == "film", results))[0]
+        film = list([r for r in results if r.key == "film"])[0]
         self.assertEqual(film.value, 3)
 
         BlogPost.drop_collection()
@@ -2311,7 +2311,7 @@ class QuerySetTest(unittest.TestCase):
             output={'replace': 'family_map', 'db_alias': 'test2'})
 
         # start a map/reduce
-        cursor.next()
+        next(cursor)
 
         results = Person.objects.map_reduce(
             map_f=map_person,
@@ -3886,7 +3886,7 @@ class QuerySetTest(unittest.TestCase):
         # Use a query to filter the people found to just person1
         people = self.Person.objects(age=20).scalar('name')
         self.assertEqual(people.count(), 1)
-        person = people.next()
+        person = next(people)
         self.assertEqual(person, "User A")
 
         # Test limit
@@ -4562,7 +4562,7 @@ class QuerySetTest(unittest.TestCase):
         if not test:
             raise AssertionError('Cursor has data and returned False')
 
-        queryset.next()
+        next(queryset)
         if not queryset:
             raise AssertionError('Cursor has data and it must returns True,'
                                  ' even in the last item.')

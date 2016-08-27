@@ -218,7 +218,7 @@ class EmbeddedDocumentList(BaseList):
     def __only_matches(cls, obj, kwargs):
         if not kwargs:
             return obj
-        return filter(lambda i: cls.__match_all(i, kwargs), obj)
+        return [i for i in obj if cls.__match_all(i, kwargs)]
 
     def __init__(self, list_items, instance, name):
         super(EmbeddedDocumentList, self).__init__(list_items, instance, name)

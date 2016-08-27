@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import itertools
@@ -170,7 +170,7 @@ class BaseQuerySet(object):
         queryset = self.order_by()
         return False if queryset.first() is None else True
 
-    def __nonzero__(self):
+    def __bool__(self):
         """ Avoid to open all records in an if stmt in Py2. """
 
         return self._has_data()
@@ -232,13 +232,13 @@ class BaseQuerySet(object):
         queryset = queryset.filter(*q_objs, **query)
 
         try:
-            result = queryset.next()
+            result = next(queryset)
         except StopIteration:
             msg = ("%s matching query does not exist."
                    % queryset._document._class_name)
             raise queryset._document.DoesNotExist(msg)
         try:
-            queryset.next()
+            next(queryset)
         except StopIteration:
             return result
 
@@ -1301,13 +1301,13 @@ class BaseQuerySet(object):
 
     # Iterator helpers
 
-    def next(self):
+    def __next__(self):
         """Wrap the result in a :class:`~mongoengine.Document` object.
         """
         if self._limit == 0 or self._none:
             raise StopIteration
 
-        raw_doc = self._cursor.next()
+        raw_doc = next(self._cursor)
         if self._as_pymongo:
             return self._get_as_pymongo(raw_doc)
         doc = self._document._from_son(raw_doc,

@@ -23,7 +23,7 @@ from bson import Binary, DBRef, ObjectId
 try:
     from bson.int64 import Int64
 except ImportError:
-    Int64 = long
+    Int64 = int
 
 from mongoengine import *
 from mongoengine.connection import get_db
@@ -763,7 +763,7 @@ class FieldTest(unittest.TestCase):
             self.assertEqual(log, log1)
 
         # Test string padding
-        microsecond = map(int, [math.pow(10, x) for x in range(6)])
+        microsecond = list(map(int, [math.pow(10, x) for x in range(6)]))
         mm = dd = hh = ii = ss = [1, 10]
 
         for values in itertools.product([2014], mm, dd, hh, ii, ss, microsecond):
@@ -3043,7 +3043,7 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3098,7 +3098,7 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'jelly.id'})
         self.assertEqual(c['next'], 10)
@@ -3123,10 +3123,10 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         counters = [i.counter for i in Person.objects]
-        self.assertEqual(counters, range(1, 11))
+        self.assertEqual(counters, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3189,10 +3189,10 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, range(1, 11))
+        self.assertEqual(ids, list(range(1, 11)))
 
         id = [i.id for i in Animal.objects]
-        self.assertEqual(id, range(1, 11))
+        self.assertEqual(id, list(range(1, 11)))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)
@@ -3216,7 +3216,7 @@ class FieldTest(unittest.TestCase):
         self.assertEqual(c['next'], 10)
 
         ids = [i.id for i in Person.objects]
-        self.assertEqual(ids, map(str, range(1, 11)))
+        self.assertEqual(ids, list(map(str, list(range(1, 11)))))
 
         c = self.db['mongoengine.counters'].find_one({'_id': 'person.id'})
         self.assertEqual(c['next'], 10)

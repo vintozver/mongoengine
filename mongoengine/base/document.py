@@ -583,7 +583,7 @@ class BaseDocument(object):
                     continue
                 elif isinstance(field, SortedListField) and field._ordering:
                     # if ordering is affected whole list is changed
-                    if any(map(lambda d: field._ordering in d._changed_fields, data)):
+                    if any([field._ordering in d._changed_fields for d in data]):
                         changed_fields.append(db_field_name)
                         continue
 
