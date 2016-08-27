@@ -419,9 +419,10 @@ class BaseDocument(object):
     @classmethod
     def cls_by_son(cls, son):
         """Return class for the bson.son.SON instance provided. Use `_cls` as a class name by default. Override to customize the instance creation (known children handling)"""
+
         try:
             class_name = son['_cls']
-        except KeyError:
+        except (TypeError, KeyError, ValueError):
             class_name = cls._class_name
 
         # Return correct subclass for document type
