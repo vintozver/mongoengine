@@ -764,12 +764,8 @@ class QuerySetTest(unittest.TestCase):
             for i in range(1, 100):
                 blogs.append(Blog(title="post %s" % i, posts=[post1, post2]))
 
-            Blog.objects.insert(blogs, load_bulk=False)
-            if mongodb_version < (2, 6):
-                self.assertEqual(q, 1)
-            else:
-                # profiling logs each doc now in the bulk op
-                self.assertEqual(q, 99)
+            self.assertEqual(len(Blog.objects.insert(blogs, load_bulk=False)), 99)
+            self.assertEqual(q, 1)  # one query for insert_many
 
         Blog.drop_collection()
         Blog.ensure_indexes()
@@ -778,11 +774,7 @@ class QuerySetTest(unittest.TestCase):
             self.assertEqual(q, 0)
 
             Blog.objects.insert(blogs)
-            if mongodb_version < (2, 6):
-                self.assertEqual(q, 2)  # 1 for insert, and 1 for in bulk fetch
-            else:
-                # 99 for insert, and 1 for in bulk fetch
-                self.assertEqual(q, 100)
+            self.assertEqual(q, 2)  # 1 for insert, and 1 for in bulk fetch
 
         Blog.drop_collection()
 
@@ -844,12 +836,11 @@ class QuerySetTest(unittest.TestCase):
         def throw_operation_error_not_unique():
             Blog.objects.insert([blog2, blog3])
 
-        self.assertRaises(NotUniqueError, throw_operation_error_not_unique)
+        self.assertRaises(OperationError, throw_operation_error_not_unique)
         self.assertEqual(Blog.objects.count(), 2)
 
-        Blog.objects.insert([blog2, blog3], write_concern={"w": 0,
-                                                           'continue_on_error': True})
-        self.assertEqual(Blog.objects.count(), 3)
+        Blog.objects.insert([blog2, blog3], write_concern={"w": 0})
+        self.assertEqual(Blog.objects.count(), 2)  # one insert and one bulk
 
     def test_get_changed_fields_query_count(self):
 

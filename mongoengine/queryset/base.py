@@ -289,9 +289,6 @@ class BaseQuerySet(object):
         """
         Document = _import_class('Document')
 
-        if write_concern is None:
-            write_concern = {}
-
         docs = doc_or_docs
         return_one = False
         if isinstance(docs, Document) or issubclass(docs.__class__, Document):
@@ -313,7 +310,9 @@ class BaseQuerySet(object):
 
         raw = [doc.to_mongo() for doc in docs]
         try:
-            ids = self._collection.insert(raw, **write_concern)
+            ids = self._collection.with_options(
+                write_concern=pymongo.write_concern.WriteConcern(**(write_concern or {}))
+            ).insert_many(raw).inserted_ids
         except pymongo.errors.DuplicateKeyError as err:
             message = 'Could not save document (%s)'
             raise NotUniqueError(message % str(err))
