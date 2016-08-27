@@ -1142,7 +1142,7 @@ class QuerySetTest(unittest.TestCase):
             BlogPost.objects.filter(title='whatever').first()
             self.assertEqual(len(q.get_ops()), 1)
             self.assertEqual(
-                q.get_ops()[0]['query']['$orderby'], {'published_date': -1})
+                q.get_ops()[0]['query']['sort'], {'published_date': -1})
 
         with db_ops_tracker() as q:
             BlogPost.objects.filter(title='whatever').order_by().first()
@@ -4604,8 +4604,8 @@ class QuerySetTest(unittest.TestCase):
             op = q.db.system.profile.find({"ns":
                                            {"$ne": "%s.system.indexes" % q.db.name}})[0]
 
-            self.assertFalse('$orderby' in op['query'],
-                             'BaseQuerySet cannot use orderby in if stmt')
+            self.assertFalse('sort' in op['query'],
+                             'BaseQuerySet cannot use sort in if stmt')
 
         with query_counter() as p:
 
@@ -4615,8 +4615,8 @@ class QuerySetTest(unittest.TestCase):
             op = p.db.system.profile.find({"ns":
                                            {"$ne": "%s.system.indexes" % q.db.name}})[0]
 
-            self.assertTrue('$orderby' in op['query'],
-                            'BaseQuerySet cannot remove orderby in for loop')
+            self.assertTrue('sort' in op['query'],
+                            'BaseQuerySet cannot remove sort in for loop')
 
     def test_bool_with_ordering_from_meta_dict(self):
 
