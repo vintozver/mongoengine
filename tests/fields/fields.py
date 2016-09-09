@@ -1305,7 +1305,7 @@ class FieldTest(unittest.TestCase):
         doc.save()
         assert isinstance(doc.field, dict)
         assert doc.field == {'_id': 2, 'recursive': {'_id': 1, 'recursive': {}}}
-        # Same thing with a Document with a _cls field
+        # Same thing with a Document
         to_embed_recursive = ToEmbedChild(id=1).save()
         to_embed_child = ToEmbedChild(
             id=2, recursive=to_embed_recursive.to_mongo().to_dict()).save()
@@ -1313,8 +1313,8 @@ class FieldTest(unittest.TestCase):
         doc.save()
         assert isinstance(doc.field, dict)
         assert doc.field == {
-            '_id': 2, '_cls': 'ToEmbedParent.ToEmbedChild',
-            'recursive': {'_id': 1, '_cls': 'ToEmbedParent.ToEmbedChild', 'recursive': {}}
+            '_id': 2,
+            'recursive': {'_id': 1, 'recursive': {}}
         }
 
     def test_dictfield_strict(self):
@@ -3548,7 +3548,7 @@ class FieldTest(unittest.TestCase):
         doc.save()
         assert isinstance(doc.field, ToEmbed)
         assert doc.field == to_embed
-        # Same thing with a Document with a _cls field
+        # Same thing with a Document
         to_embed_recursive = ToEmbedChild(id=1).save()
         to_embed_child = ToEmbedChild(id=2, recursive=to_embed_recursive).save()
         doc = Doc(field=to_embed_child)

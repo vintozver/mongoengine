@@ -41,20 +41,18 @@ class TurnOffInheritanceTest(unittest.TestCase):
                 'indexes': ['name']
             }
 
-        # 3. Remove _types and _cls
+        # 3. Remove _types
         collection = Animal._get_collection()
-        collection.update({}, {"$unset": {"_types": 1, "_cls": 1}}, multi=True)
+        collection.update({}, {"$unset": {"_types": 1}}, multi=True)
 
         # 3. Confirm extra data is removed
-        count = collection.find({"$or": [{'_types': {"$exists": True}},
-                                         {'_cls': {"$exists": True}}]}).count()
+        count = collection.find({"$or": [{'_types': {"$exists": True}}]}).count()
+
         assert count == 0
 
         # 4. Remove indexes
         info = collection.index_information()
-        indexes_to_drop = [key for key, value in info.items()
-                           if '_types' in dict(value['key'])
-                              or '_cls' in dict(value['key'])]
+        indexes_to_drop = [key for key, value in info.items() if '_types' in dict(value['key'])]
         for index in indexes_to_drop:
             collection.drop_index(index)
 

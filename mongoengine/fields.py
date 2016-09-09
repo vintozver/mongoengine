@@ -613,10 +613,7 @@ class GenericEmbeddedDocumentField(BaseField):
         if document is None:
             return None
 
-        data = document.to_mongo(**kwargs)
-        if '_cls' not in data:
-            data['_cls'] = document._class_name
-        return data
+        return document.to_mongo(**kwargs)
 
 
 class DynamicField(BaseField):
@@ -633,13 +630,9 @@ class DynamicField(BaseField):
             return value
 
         if hasattr(value, 'to_mongo'):
-            cls = value.__class__
             val = value.to_mongo(**kwargs)
-            # If we its a document thats not inherited add _cls
             if isinstance(value, Document):
-                val = {"_ref": value.to_dbref(), "_cls": cls.__name__}
-            if isinstance(value, EmbeddedDocument):
-                val['_cls'] = cls.__name__
+                val = {"_ref": value.to_dbref()}
             return val
 
         if not isinstance(value, (dict, list, tuple)):
@@ -660,12 +653,6 @@ class DynamicField(BaseField):
         return value
 
     def to_python(self, value):
-        if isinstance(value, dict) and '_cls' in value:
-            doc_cls = get_document(value['_cls'])
-            if '_ref' in value:
-                value = doc_cls._get_db().dereference(value['_ref'])
-            return doc_cls._from_son(value)
-
         return super(DynamicField, self).to_python(value)
 
     def lookup_member(self, member_name):

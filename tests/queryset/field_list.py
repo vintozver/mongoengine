@@ -15,7 +15,7 @@ class QueryFieldListTest(unittest.TestCase):
         q = QueryFieldList()
         self.assertFalse(q)
 
-        q = QueryFieldList(always_include=['_cls'])
+        q = QueryFieldList()
         self.assertFalse(q)
 
     def test_include_include(self):

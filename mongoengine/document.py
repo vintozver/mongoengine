@@ -28,19 +28,6 @@ __all__ = ('Document', 'EmbeddedDocument', 'DynamicDocument',
            'InvalidCollectionError', 'NotUniqueError', 'MapReduceDocument')
 
 
-def includes_cls(fields):
-    """ Helper function used for ensuring and comparing indexes
-    """
-
-    first_field = None
-    if len(fields):
-        if isinstance(fields[0], str):
-            first_field = fields[0]
-        elif isinstance(fields[0], (list, tuple)) and len(fields[0]):
-            first_field = fields[0][0]
-    return first_field == '_cls'
-
-
 class InvalidCollectionError(Exception):
     pass
 
@@ -53,11 +40,8 @@ class EmbeddedDocument(BaseDocument, metaclass=DocumentMetaclass):
 
     A :class:`~mongoengine.EmbeddedDocument` subclass may be itself subclassed,
     to create a specialised version of the embedded document that will be
-    stored in the same collection. To facilitate this behaviour a `_cls`
-    field is added to documents (hidden though the MongoEngine interface).
-    To disable this behaviour and remove the dependence on the presence of
-    `_cls` set :attr:`allow_inheritance` to ``False`` in the :attr:`meta`
-    dictionary.
+    stored in the same collection. To facilitate this behaviour a `cls_from_son`
+    method is defined.
     """
 
     __slots__ = ('_instance', )
@@ -101,11 +85,8 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
 
     A :class:`~mongoengine.Document` subclass may be itself subclassed, to
     create a specialised version of the document that will be stored in the
-    same collection. To facilitate this behaviour a `_cls`
-    field is added to documents (hidden though the MongoEngine interface).
-    To disable this behaviour and remove the dependence on the presence of
-    `_cls` set :attr:`allow_inheritance` to ``False`` in the :attr:`meta`
-    dictionary.
+    same collection. To facilitate this behaviour a `cls_for_son` method
+    is defined.
 
     A :class:`~mongoengine.Document` may use a **Capped Collection** by
     specifying :attr:`max_documents` and :attr:`max_size` in the :attr:`meta`
@@ -127,11 +108,6 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
     False then indexes will not be created by MongoEngine.  This is useful in
     production systems where index creation is performed as part of a
     deployment system.
-
-    By default, _cls will be added to the start of every index (that
-    doesn't contain a list) if allow_inheritance is True. This can be
-    disabled by either setting cls to False on the specific index or
-    by setting index_cls to False on the meta dictionary for the document.
 
     By default, any extra attribute existing in stored data but not declared
     in your model will raise a :class:`~mongoengine.FieldDoesNotExist` error.
@@ -469,8 +445,6 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
         if not self.pk:
             if kwargs.get('upsert', False):
                 query = self.to_mongo()
-                if "_cls" in query:
-                    del query["_cls"]
                 return self._qs.filter(**query).update_one(**kwargs)
             else:
                 raise OperationError(
@@ -742,7 +716,6 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
         background = cls._meta.get('index_background', False)
         drop_dups = cls._meta.get('index_drop_dups', False)
         index_opts = cls._meta.get('index_opts') or {}
-        index_cls = cls._meta.get('index_cls', True)
         if drop_dups:
             msg = "drop_dups is deprecated and is removed when using PyMongo 3+."
             warnings.warn(msg, DeprecationWarning)
@@ -753,41 +726,16 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
         if not collection.is_mongos and collection.read_preference > 1:
             return
 
-        # determine if an index which we are creating includes
-        # _cls as its first field; if so, we can avoid creating
-        # an extra index on _cls, as mongodb will use the existing
-        # index to service queries against _cls
-        cls_indexed = False
-
         # Ensure document-defined indexes are created
         if cls._meta['index_specs']:
             index_spec = cls._meta['index_specs']
             for spec in index_spec:
                 spec = spec.copy()
                 fields = spec.pop('fields')
-                cls_indexed = cls_indexed or includes_cls(fields)
                 opts = index_opts.copy()
                 opts.update(spec)
 
-                # we shouldn't pass 'cls' to the collection.ensureIndex options
-                # because of https://jira.mongodb.org/browse/SERVER-769
-                if 'cls' in opts:
-                    del opts['cls']
-
                 collection.create_index(fields, background=background, **opts)
-
-        # If _cls is being used (for polymorphism), it needs an index,
-        # only if another index doesn't begin with _cls
-        if (index_cls and not cls_indexed and
-                cls._meta.get('allow_inheritance', ALLOW_INHERITANCE) is True):
-
-            # we shouldn't pass 'cls' to the collection.ensureIndex options
-            # because of https://jira.mongodb.org/browse/SERVER-769
-            if 'cls' in index_opts:
-                del index_opts['cls']
-
-            collection.create_index('_cls', background=background,
-                                        **index_opts)
 
     @classmethod
     def list_indexes(cls):
@@ -842,12 +790,9 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
                 if index not in indexes:
                     indexes.append(index)
 
-        # finish up by appending { '_id': 1 } and { '_cls': 1 }, if needed
+        # finish up by appending { '_id': 1 }, if needed
         if [('_id', 1)] not in indexes:
             indexes.append([('_id', 1)])
-        if (cls._meta.get('index_cls', True) and
-                cls._meta.get('allow_inheritance', ALLOW_INHERITANCE) is True):
-            indexes.append([('_cls', 1)])
 
         return indexes
 
@@ -862,16 +807,6 @@ class Document(BaseDocument, metaclass=TopLevelDocumentMetaclass):
                     for info in cls._get_collection().index_information().values()]
         missing = [index for index in required if index not in existing]
         extra = [index for index in existing if index not in required]
-
-        # if { _cls: 1 } is missing, make sure it's *really* necessary
-        if [('_cls', 1)] in missing:
-            cls_obsolete = False
-            for index in existing:
-                if includes_cls(index) and index not in extra:
-                    cls_obsolete = True
-                    break
-            if cls_obsolete:
-                missing.remove([('_cls', 1)])
 
         return {'missing': missing, 'extra': extra}
 

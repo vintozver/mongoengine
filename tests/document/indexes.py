@@ -91,18 +91,14 @@ class IndexesTest(unittest.TestCase):
                 'allow_inheritance': True
             }
 
-        expected_specs = [{'fields': [('_cls', 1), ('addDate', -1)]},
-                          {'fields': [('_cls', 1), ('tags', 1)]},
-                          {'fields': [('_cls', 1), ('category', 1),
-                                      ('addDate', -1)]}]
+        expected_specs = [{'fields': [('addDate', -1)]},
+                          {'fields': [('tags', 1)]},
+                          {'fields': [('category', 1), ('addDate', -1)]}]
         self.assertEqual(expected_specs, BlogPost._meta['index_specs'])
 
         BlogPost.ensure_indexes()
         info = BlogPost.objects._collection.index_information()
         # _id, '-date', 'tags', ('cat', 'date')
-        # NB: there is no index on _cls by itself, since
-        # the indices on -date and tags will both contain
-        # _cls as first element in the key
         self.assertEqual(len(info), 4)
         info = [value['key'] for key, value in info.items()]
         for expected in expected_specs:
@@ -112,7 +108,7 @@ class IndexesTest(unittest.TestCase):
             title = StringField()
             meta = {'indexes': ['title']}
 
-        expected_specs.append({'fields': [('_cls', 1), ('title', 1)]})
+        expected_specs.append({'fields': [('title', 1)]})
         self.assertEqual(expected_specs, ExtendedBlogPost._meta['index_specs'])
 
         BlogPost.drop_collection()
@@ -153,37 +149,7 @@ class IndexesTest(unittest.TestCase):
             description = StringField()
 
         self.assertEqual(A._meta['index_specs'], B._meta['index_specs'])
-        self.assertEqual([{'fields': [('_cls', 1), ('title', 1)]}],
-                         A._meta['index_specs'])
-
-    def test_index_no_cls(self):
-        """Ensure index specs are inhertited correctly"""
-
-        class A(Document):
-            title = StringField()
-            meta = {
-                'indexes': [
-                        {'fields': ('title',), 'cls': False},
-                ],
-                'allow_inheritance': True,
-                'index_cls': False
-                }
-
-        self.assertEqual([('title', 1)], A._meta['index_specs'][0]['fields'])
-        A._get_collection().drop_indexes()
-        A.ensure_indexes()
-        info = A._get_collection().index_information()
-        self.assertEqual(len(info.keys()), 2)
-
-        class B(A):
-            c = StringField()
-            d = StringField()
-            meta = {
-                'indexes': [{'fields': ['c']}, {'fields': ['d'], 'cls': True}],
-                'allow_inheritance': True
-            }
-        self.assertEqual([('c', 1)], B._meta['index_specs'][1]['fields'])
-        self.assertEqual([('_cls', 1), ('d', 1)], B._meta['index_specs'][2]['fields'])
+        self.assertEqual([{'fields': [('title', 1)]}], A._meta['index_specs'])
 
     def test_build_index_spec_is_not_destructive(self):
 
@@ -459,7 +425,6 @@ class IndexesTest(unittest.TestCase):
         BlogPost.drop_collection()
 
         info = BlogPost.objects._collection.index_information()
-        # we don't use _cls in with list fields by default
         self.assertEqual(sorted(info.keys()), ['_id_', 'tags.tag_1'])
 
         post1 = BlogPost(title="Embedded Indexes tests in place",
@@ -992,35 +957,7 @@ class IndexesTest(unittest.TestCase):
                 'key': [('txt2', 1)],
                 'background': False
             },
-            '_cls_1': {
-                'key': [('_cls', 1)],
-                'background': False,
-            }
         })
-
-    def test_compound_index_underscore_cls_not_overwritten(self):
-        """
-        Test that the compound index doesn't get another _cls when it is specified
-        """
-        class TestDoc(Document):
-            shard_1 = StringField()
-            txt_1 = StringField()
-
-            meta = {
-                'collection': 'test',
-                'allow_inheritance': True,
-                'sparse': True,
-                'shard_key': 'shard_1',
-                'indexes': [
-                    ('shard_1', '_cls', 'txt_1'),
-                ]
-            }
-
-        TestDoc.drop_collection()
-        TestDoc.ensure_indexes()
-
-        index_info = TestDoc._get_collection().index_information()
-        self.assertTrue('shard_1_1__cls_1_txt_1_1' in index_info)
 
 
 if __name__ == '__main__':

@@ -29,11 +29,11 @@ class DynamicTest(unittest.TestCase):
         p.name = "James"
         p.age = 34
 
-        self.assertEqual(p.to_mongo(), {"_cls": "Person", "name": "James",
+        self.assertEqual(p.to_mongo(), {"name": "James",
                                         "age": 34})
-        self.assertEqual(p.to_mongo().keys(), ["_cls", "name", "age"])
+        self.assertEqual(p.to_mongo().keys(), ["name", "age"])
         p.save()
-        self.assertEqual(p.to_mongo().keys(), ["_id", "_cls", "name", "age"])
+        self.assertEqual(p.to_mongo().keys(), ["_id", "name", "age"])
 
         self.assertEqual(self.Person.objects.first().age, 34)
 
@@ -70,7 +70,7 @@ class DynamicTest(unittest.TestCase):
         self.assertEqual(p.misc, {'hello': 'world'})
         collection = self.db[self.Person._get_collection_name()]
         obj = collection.find_one()
-        self.assertEqual(sorted(obj.keys()), ['_cls', '_id', 'misc', 'name'])
+        self.assertEqual(sorted(obj.keys()), ['_id', 'misc', 'name'])
 
         del p.misc
         p.save()
@@ -79,7 +79,7 @@ class DynamicTest(unittest.TestCase):
         self.assertFalse(hasattr(p, 'misc'))
 
         obj = collection.find_one()
-        self.assertEqual(sorted(obj.keys()), ['_cls', '_id', 'name'])
+        self.assertEqual(sorted(obj.keys()), ['_id', 'name'])
 
     def test_reload_after_unsetting(self):
         p = self.Person()
@@ -94,11 +94,11 @@ class DynamicTest(unittest.TestCase):
         p.update(age=1)
 
         self.assertEqual(len(p._data), 3)
-        self.assertEqual(sorted(p._data.keys()), ['_cls', 'id', 'name'])
+        self.assertEqual(sorted(p._data.keys()), ['id', 'name'])
 
         p.reload()
         self.assertEqual(len(p._data), 4)
-        self.assertEqual(sorted(p._data.keys()), ['_cls', 'age', 'id', 'name'])
+        self.assertEqual(sorted(p._data.keys()), ['age', 'id', 'name'])
 
     def test_dynamic_document_queries(self):
         """Ensure we can query dynamic fields"""
@@ -215,7 +215,6 @@ class DynamicTest(unittest.TestCase):
 
         self.assertEqual(doc.to_mongo(), {
             "embedded_field": {
-                "_cls": "Embedded",
                 "string_field": "hello",
                 "int_field": 1,
                 "dict_field": {"hello": "world"},
@@ -259,17 +258,15 @@ class DynamicTest(unittest.TestCase):
 
         self.assertEqual(doc.to_mongo(), {
             "embedded_field": {
-                "_cls": "Embedded",
                 "string_field": "hello",
                 "int_field": 1,
                 "dict_field": {"hello": "world"},
-                "list_field": ['1', 2,
-                    {"_cls": "Embedded",
+                "list_field": ['1', 2, {
                     "string_field": "hello",
                     "int_field": 1,
                     "dict_field": {"hello": "world"},
-                    "list_field": ['1', 2, {'hello': 'world'}]}
-                ]
+                    "list_field": ['1', 2, {'hello': 'world'}]
+                }]
             }
         })
         doc.save()

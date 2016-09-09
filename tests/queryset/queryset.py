@@ -3618,7 +3618,7 @@ class QuerySetTest(unittest.TestCase):
                  value.get('unique', False),
                  value.get('sparse', False))
                 for key, value in info.items()]
-        self.assertTrue(([('_cls', 1), ('message', 1)], False, False) in info)
+        self.assertTrue(([('message', 1)], False, False) in info)
 
     def test_where(self):
         """Ensure that where clauses work.
@@ -3992,26 +3992,6 @@ class QuerySetTest(unittest.TestCase):
         ak = list(
             Bar.objects(foo__match={'shape': "square", "color__exists": False}))
         self.assertEqual([b3], ak)
-
-    def test_upsert_includes_cls(self):
-        """Upserts should include _cls information for inheritable classes
-        """
-
-        class Test(Document):
-            test = StringField()
-
-        Test.drop_collection()
-        Test.objects(test='foo').update_one(upsert=True, set__test='foo')
-        self.assertFalse('_cls' in Test._collection.find_one())
-
-        class Test(Document):
-            meta = {'allow_inheritance': True}
-            test = StringField()
-
-        Test.drop_collection()
-
-        Test.objects(test='foo').update_one(upsert=True, set__test='foo')
-        self.assertTrue('_cls' in Test._collection.find_one())
 
     def test_update_upsert_looks_like_a_digit(self):
         class MyDoc(DynamicDocument):
@@ -4506,15 +4486,12 @@ class QuerySetTest(unittest.TestCase):
 
         self.assertEqual(Animal.objects(name='Charlie')._query, {
             'name': 'Charlie',
-            '_cls': {'$in': ('Animal', 'Animal.Dog', 'Animal.Cat')}
         })
         self.assertEqual(Dog.objects(name='Charlie')._query, {
             'name': 'Charlie',
-            '_cls': 'Animal.Dog'
         })
         self.assertEqual(Cat.objects(name='Charlie')._query, {
             'name': 'Charlie',
-            '_cls': 'Animal.Cat'
         })
 
     def test_can_have_field_same_name_as_query_operator(self):

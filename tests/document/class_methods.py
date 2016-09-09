@@ -36,7 +36,7 @@ class ClassMethodsTest(unittest.TestCase):
     def test_definition(self):
         """Ensure that document may be defined using fields.
         """
-        self.assertEqual(['_cls', 'age', 'id', 'name'],
+        self.assertEqual(['age', 'id', 'name'],
                          sorted(self.Person._fields.keys()))
         self.assertEqual(["IntField", "ObjectIdField", "StringField", "StringField"],
                         sorted([x.__class__.__name__ for x in
@@ -117,7 +117,7 @@ class ClassMethodsTest(unittest.TestCase):
     def test_compare_indexes_inheritance(self):
         """ Ensure that the indexes are properly created and that
         compare_indexes identifies the missing/extra indexes for subclassed
-        documents (_cls included)
+        documents
         """
 
         class BlogPost(Document):
@@ -144,13 +144,13 @@ class ClassMethodsTest(unittest.TestCase):
         self.assertEqual(BlogPost.compare_indexes(), { 'missing': [], 'extra': [] })
 
         BlogPostWithTags.ensure_index(['author', 'tag_list'])
-        self.assertEqual(BlogPost.compare_indexes(), { 'missing': [], 'extra': [[('_cls', 1), ('author', 1), ('tag_list', 1)]] })
+        self.assertEqual(BlogPost.compare_indexes(), { 'missing': [], 'extra': [[('author', 1), ('tag_list', 1)]] })
 
         BlogPostWithTags._get_collection().drop_index('_cls_1_author_1_tag_list_1')
         self.assertEqual(BlogPost.compare_indexes(), { 'missing': [], 'extra': [] })
 
         BlogPostWithTags._get_collection().drop_index('_cls_1_author_1_tags_1')
-        self.assertEqual(BlogPost.compare_indexes(), { 'missing': [[('_cls', 1), ('author', 1), ('tags', 1)]], 'extra': [] })
+        self.assertEqual(BlogPost.compare_indexes(), { 'missing': [[('author', 1), ('tags', 1)]], 'extra': [] })
 
     def test_compare_indexes_multiple_subclasses(self):
         """ Ensure that compare_indexes behaves correctly if called from a
@@ -228,9 +228,9 @@ class ClassMethodsTest(unittest.TestCase):
         self.assertEqual(BlogPost.list_indexes(),
                          BlogPostWithTagsAndExtraText.list_indexes())
         self.assertEqual(BlogPost.list_indexes(),
-                         [[('_cls', 1), ('author', 1), ('tags', 1)],
-                         [('_cls', 1), ('author', 1), ('tags', 1), ('extra_text', 1)],
-                         [('_id', 1)], [('_cls', 1)]])
+                         [[('author', 1), ('tags', 1)],
+                         [('author', 1), ('tags', 1), ('extra_text', 1)],
+                         [('_id', 1)], []])
 
     def test_register_delete_rule_inherited(self):
 

@@ -624,10 +624,10 @@ class InstanceTest(unittest.TestCase):
             salary = IntField()
 
         self.assertEqual(Person(name="Bob", age=35).to_mongo().keys(),
-                         ['_cls', 'name', 'age'])
+                         ['name', 'age'])
         self.assertEqual(
             Employee(name="Bob", age=35, salary=0).to_mongo().keys(),
-            ['_cls', 'name', 'age', 'salary'])
+            ['name', 'age', 'salary'])
 
     def test_embedded_document_to_mongo_id(self):
         class SubDoc(EmbeddedDocument):

@@ -11,7 +11,7 @@ class QueryFieldList(object):
 
         :param fields: A list of fields used in `.only()` or `.exclude()`
         :param value: How to handle the fields; either `ONLY` or `EXCLUDE`
-        :param always_include: Any fields to always_include eg `_cls`
+        :param always_include: Any fields to always_include
         :param _only_called: Has `.only()` been called?  If so its a set of fields
            otherwise it performs a union.
         """

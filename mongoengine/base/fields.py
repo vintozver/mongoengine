@@ -338,12 +338,7 @@ class ComplexBaseField(BaseField):
             if isinstance(value, Document):
                 return GenericReferenceField().to_mongo(
                     value, **kwargs)
-            cls = value.__class__
-            val = value.to_mongo(**kwargs)
-            # If it's a document that is not inherited add _cls
-            if isinstance(value, EmbeddedDocument):
-                val['_cls'] = cls.__name__
-            return val
+            return value.to_mongo(**kwargs)
 
         is_list = False
         if not hasattr(value, 'items'):
@@ -365,9 +360,6 @@ class ComplexBaseField(BaseField):
                         self.error('You can only reference documents once they'
                                    ' have been saved to the database')
 
-                    # If its a document that is not inheritable it won't have
-                    # any _cls data so make it a generic reference allows
-                    # us to dereference
                     meta = getattr(v, '_meta', {})
                     allow_inheritance = (
                         meta.get('allow_inheritance', ALLOW_INHERITANCE)
@@ -379,12 +371,7 @@ class ComplexBaseField(BaseField):
                         collection = v._get_collection_name()
                         value_dict[k] = DBRef(collection, v.pk)
                 elif hasattr(v, 'to_mongo'):
-                    cls = v.__class__
-                    val = v.to_mongo(**kwargs)
-                    # If it's a document that is not inherited add _cls
-                    if isinstance(v, (Document, EmbeddedDocument)):
-                        val['_cls'] = cls.__name__
-                    value_dict[k] = val
+                    value_dict[k] = v.to_mongo(**kwargs)
                 else:
                     value_dict[k] = self.to_mongo(v, **kwargs)
 

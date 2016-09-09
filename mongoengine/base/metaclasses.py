@@ -44,10 +44,6 @@ class DocumentMetaclass(type):
             attrs['_meta'] = meta
             attrs['_meta']['abstract'] = False  # 789: EmbeddedDocument shouldn't inherit abstract
 
-        if attrs['_meta'].get('allow_inheritance', ALLOW_INHERITANCE) is True:
-            StringField = _import_class('StringField')
-            attrs['_cls'] = StringField()
-
         # Handle document Fields
 
         # Merge all fields from subclasses
@@ -109,7 +105,7 @@ class DocumentMetaclass(type):
         for base in flattened_bases:
             if (not getattr(base, '_is_base_cls', True) and
                     not getattr(base, '_meta', {}).get('abstract', True)):
-                # Collate hierarchy for _cls and _subclasses
+                # Collate hierarchy for _subclasses
                 class_name.append(base.__name__)
 
             if hasattr(base, '_meta'):

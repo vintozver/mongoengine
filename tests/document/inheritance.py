@@ -163,7 +163,7 @@ class InheritanceTest(unittest.TestCase):
         class Employee(Person):
             salary = IntField()
 
-        self.assertEqual(['_cls', 'age', 'id', 'name', 'salary'],
+        self.assertEqual(['age', 'id', 'name', 'salary'],
                          sorted(Employee._fields.keys()))
         self.assertEqual(Employee._get_collection_name(),
                          Person._get_collection_name())
@@ -180,12 +180,12 @@ class InheritanceTest(unittest.TestCase):
         class Employee(Person):
             salary = IntField()
 
-        self.assertEqual(['_cls', 'age', 'id', 'name', 'salary'],
+        self.assertEqual(['age', 'id', 'name', 'salary'],
                          sorted(Employee._fields.keys()))
         self.assertEqual(Person(name="Bob", age=35).to_mongo().keys(),
-                         ['_cls', 'name', 'age'])
+                         ['name', 'age'])
         self.assertEqual(Employee(name="Bob", age=35, salary=0).to_mongo().keys(),
-                         ['_cls', 'name', 'age', 'salary'])
+                         ['name', 'age', 'salary'])
         self.assertEqual(Employee._get_collection_name(),
                          Person._get_collection_name())
 
@@ -221,7 +221,7 @@ class InheritanceTest(unittest.TestCase):
 
         self.assertEqual(
             sorted([idx['key'] for idx in C._get_collection().index_information().values()]),
-            sorted([[('_cls', 1), ('b', 1)], [('_id', 1)], [('_cls', 1), ('a', 1)]])
+            sorted([[('b', 1)], [('_id', 1)], [('a', 1)]])
         )
 
     def test_polymorphic_queries(self):
@@ -254,7 +254,7 @@ class InheritanceTest(unittest.TestCase):
 
     def test_allow_inheritance(self):
         """Ensure that inheritance may be disabled on simple classes and that
-        _cls and _subclasses will not be used.
+        _subclasses will not be used.
         """
 
         class Animal(Document):
@@ -266,13 +266,8 @@ class InheritanceTest(unittest.TestCase):
 
         self.assertRaises(ValueError, create_dog_class)
 
-        # Check that _cls etc aren't present on simple documents
         dog = Animal(name='dog').save()
         self.assertEqual(dog.to_mongo().keys(), ['_id', 'name'])
-
-        collection = self.db[Animal._get_collection_name()]
-        obj = collection.find_one()
-        self.assertFalse('_cls' in obj)
 
     def test_cant_turn_off_inheritance_on_subclass(self):
         """Ensure if inheritance is on in a subclass you cant turn it off
@@ -288,8 +283,7 @@ class InheritanceTest(unittest.TestCase):
         self.assertRaises(ValueError, create_mammal_class)
 
     def test_allow_inheritance_abstract_document(self):
-        """Ensure that abstract documents can set inheritance rules and that
-        _cls will not be used.
+        """Ensure that abstract documents can set inheritance rules will not be used.
         """
         class FinalDocument(Document):
             meta = {'abstract': True,
@@ -302,10 +296,6 @@ class InheritanceTest(unittest.TestCase):
             class Mammal(Animal):
                 pass
         self.assertRaises(ValueError, create_mammal_class)
-
-        # Check that _cls isn't present in simple documents
-        doc = Animal(name='dog')
-        self.assertFalse('_cls' in doc.to_mongo())
 
     def test_abstract_handle_ids_in_metaclass_properly(self):
 
@@ -382,16 +372,6 @@ class InheritanceTest(unittest.TestCase):
                 pass
 
         self.assertRaises(ValueError, create_special_comment)
-
-        doc = Comment(content='test')
-        self.assertFalse('_cls' in doc.to_mongo())
-
-        class Comment(EmbeddedDocument):
-            content = StringField()
-            meta = {'allow_inheritance': True}
-
-        doc = Comment(content='test')
-        self.assertTrue('_cls' in doc.to_mongo())
 
     def test_document_inheritance(self):
         """Ensure mutliple inheritance of abstract documents

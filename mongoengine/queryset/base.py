@@ -57,7 +57,6 @@ class BaseQuerySet(object):
         self._ordering = None
         self._snapshot = False
         self._timeout = True
-        self._class_check = True
         self._slave_okay = False
         self._read_preference = None
         self._iter = False
@@ -66,16 +65,6 @@ class BaseQuerySet(object):
         self._as_pymongo = False
         self._as_pymongo_coerce = False
         self._search_text = None
-
-        # If inheritance is allowed, only return instances and instances of
-        # subclasses of the class being used
-        if document._meta.get('allow_inheritance') is True:
-            if len(self._document._subclasses) == 1:
-                self._initial_query = {"_cls": self._document._subclasses[0]}
-            else:
-                self._initial_query = {
-                    "_cls": {"$in": self._document._subclasses}}
-            self._loaded_fields = QueryFieldList(always_include=['_cls'])
         self._cursor_obj = None
         self._limit = None
         self._skip = None
@@ -116,7 +105,6 @@ class BaseQuerySet(object):
         queryset._query_obj &= query
         queryset._mongo_query = None
         queryset._cursor_obj = None
-        queryset._class_check = class_check
 
         return queryset
 
@@ -454,13 +442,6 @@ class BaseQuerySet(object):
         query = queryset._query
         update = transform.update(queryset._document, **update)
 
-        # If doing an atomic upsert on an inheritable class
-        # then ensure we add _cls to the update operation
-        if upsert and '_cls' in query:
-            if '$set' in update:
-                update["$set"]["_cls"] = queryset._document._class_name
-            else:
-                update["$set"] = {"_cls": queryset._document._class_name}
         try:
             result = queryset._collection.update(query, update, multi=multi,
                                                  upsert=upsert, **write_concern)
@@ -639,8 +620,6 @@ class BaseQuerySet(object):
         """
         Only return instances of this document and not any inherited documents
         """
-        if self._document._meta.get('allow_inheritance') is True:
-            self._initial_query = {"_cls": self._document._class_name}
 
         return self
 
@@ -676,7 +655,7 @@ class BaseQuerySet(object):
 
         copy_props = ('_mongo_query', '_initial_query', '_none', '_query_obj',
                       '_where_clause', '_loaded_fields', '_ordering', '_snapshot',
-                      '_timeout', '_class_check', '_slave_okay', '_read_preference',
+                      '_timeout', '_slave_okay', '_read_preference',
                       '_iter', '_scalar', '_as_pymongo', '_as_pymongo_coerce',
                       '_limit', '_skip', '_hint', '_auto_dereference',
                       '_search_text', 'only_fields', '_max_time_ms')
@@ -1404,11 +1383,8 @@ class BaseQuerySet(object):
     def _query(self):
         if self._mongo_query is None:
             self._mongo_query = self._query_obj.to_query(self._document)
-            if self._class_check and self._initial_query:
-                if "_cls" in self._mongo_query:
-                    self._mongo_query = {"$and": [self._initial_query, self._mongo_query]}
-                else:
-                    self._mongo_query.update(self._initial_query)
+            if self._initial_query:
+                self._mongo_query = {"$and": [self._initial_query, self._mongo_query]}
         return self._mongo_query
 
     @property
@@ -1615,7 +1591,7 @@ class BaseQuerySet(object):
         if not getattr(self, '__as_pymongo_fields', None):
             self.__as_pymongo_fields = []
 
-            for field in self._loaded_fields.fields - set(['_cls']):
+            for field in self._loaded_fields.fields:
                 self.__as_pymongo_fields.append(field)
                 while '.' in field:
                     field, _ = field.rsplit('.', 1)

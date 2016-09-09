@@ -72,7 +72,7 @@ class BaseDocument(object):
         # if so raise an Exception.
         if not self._dynamic and (self._meta.get('strict', True) or _created):
             for var in values.keys():
-                if var not in (list(self._fields.keys()) + ['id', 'pk', '_cls', '_text_score']):
+                if var not in (list(self._fields.keys()) + ['id', 'pk', '_text_score']):
                     msg = (
                         "The field '{0}' does not exist on the document '{1}'"
                     ).format(var, self._class_name)
@@ -93,9 +93,6 @@ class BaseDocument(object):
             value = getattr(self, key, None)
             setattr(self, key, value)
 
-        if "_cls" not in values:
-            self._cls = self._class_name
-
         # Set passed values after initialisation
         if self._dynamic:
             dynamic_data = {}
@@ -110,7 +107,7 @@ class BaseDocument(object):
                 if key == '__auto_convert':
                     continue
                 key = self._reverse_db_field_map.get(key, key)
-                if key in self._fields or key in ('id', 'pk', '_cls'):
+                if key in self._fields or key in ('id', 'pk'):
                     if __auto_convert and value is not None:
                         field = self._fields.get(key)
                         if field and not isinstance(field, FileField):
@@ -302,8 +299,6 @@ class BaseDocument(object):
 
         data = SON()
         data["_id"] = None
-        data['_cls'] = self._class_name
-        EmbeddedDocumentField = _import_class("EmbeddedDocumentField")
         # only root fields ['test1.a', 'test2'] => ['test1', 'test2']
         root_fields = set([f.split('.')[0] for f in fields])
 
@@ -350,11 +345,6 @@ class BaseDocument(object):
 
         if data['_id'] is None:
             data.pop('_id')
-
-        # Only add _cls if allow_inheritance is True
-        if (not hasattr(self, '_meta') or
-                not self._meta.get('allow_inheritance', ALLOW_INHERITANCE) is True):
-            data.pop('_cls')
 
         return data
 
@@ -418,16 +408,9 @@ class BaseDocument(object):
 
     @classmethod
     def cls_by_son(cls, son):
-        """Return class for the bson.son.SON instance provided. Use `_cls` as a class name by default. Override to customize the instance creation (known children handling)"""
-
-        try:
-            class_name = son['_cls']
-        except (TypeError, KeyError, ValueError):
-            class_name = cls._class_name
-
-        # Return correct subclass for document type
-        if class_name != cls._class_name:
-            cls = get_document(class_name)
+        """Return class for the bson.son.SON instance provided.
+        Override to customize the instance creation (known children handling).
+        """
 
         return cls
 
@@ -442,10 +425,6 @@ class BaseDocument(object):
         if not hasattr(value, 'items'):
             is_list = True
             value = dict([(k, v) for k, v in enumerate(value)])
-
-        if not is_list and '_cls' in value:
-            cls = get_document(value['_cls'])
-            return cls(**value)
 
         data = {}
         for k, v in value.items():
@@ -778,16 +757,6 @@ class BaseDocument(object):
         index_list = []
         direction = None
 
-        # Check to see if we need to include _cls
-        allow_inheritance = cls._meta.get('allow_inheritance',
-                                          ALLOW_INHERITANCE)
-        include_cls = (allow_inheritance and not spec.get('sparse', False) and
-                       spec.get('cls',  True) and '_cls' not in spec['fields'])
-
-        # 733: don't include cls if index_cls is False unless there is an explicit cls with the index
-        include_cls = include_cls and (spec.get('cls', False) or cls._meta.get('index_cls', True))
-        if "cls" in spec:
-            spec.pop('cls')
         for key in spec['fields']:
             # If inherited spec continue
             if isinstance(key, (list, tuple)):
@@ -833,11 +802,6 @@ class BaseDocument(object):
                     parts.append(field)
                 key = '.'.join(parts)
             index_list.append((key, direction))
-
-        # Don't add cls to a geo index
-        if include_cls and direction not in (
-                pymongo.GEO2D, pymongo.GEOHAYSTACK, pymongo.GEOSPHERE):
-            index_list.insert(0, ('_cls', 1))
 
         if index_list:
             spec['fields'] = index_list
