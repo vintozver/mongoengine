@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import datetime
 import decimal
 import itertools
@@ -648,9 +649,9 @@ class DynamicField(BaseField):
         is_list = False
         if not hasattr(value, 'items'):
             is_list = True
-            value = dict([(k, v) for k, v in enumerate(value)])
+            value = OrderedDict([(k, v) for k, v in enumerate(value)])
 
-        data = {}
+        data = OrderedDict()
         for k, v in value.items():
             data[k] = self.to_mongo(v, **kwargs)
 
@@ -838,7 +839,7 @@ class DictField(ComplexBaseField):
 
         if hasattr(self.field, 'field'):
             if op in ('set', 'unset') and isinstance(value, dict):
-                return dict(
+                return OrderedDict(
                     (k, self.field.prepare_query_value(op, v))
                     for k, v in value.items())
             return self.field.prepare_query_value(op, value)
@@ -1051,7 +1052,7 @@ class CachedReferenceField(BaseField):
 
     def on_document_pre_save(self, sender, document, created, **kwargs):
         if not created:
-            update_kwargs = dict(
+            update_kwargs = OrderedDict(
                 ('set__%s__%s' % (self.name, k), v)
                 for k, v in document._delta()[0].items()
                 if k in self.fields)
@@ -1116,7 +1117,7 @@ class CachedReferenceField(BaseField):
         ))
 
         kwargs['fields'] = self.fields
-        value.update(dict(document.to_mongo(**kwargs)))
+        value.update(OrderedDict(document.to_mongo(**kwargs)))
         return value
 
     def prepare_query_value(self, op, value):
@@ -1683,11 +1684,11 @@ class ImageField(FileField):
             raise ImproperlyConfigured("PIL library was not found")
 
         params_size = ('width', 'height', 'force')
-        extra_args = dict(size=size, thumbnail_size=thumbnail_size)
+        extra_args = OrderedDict(size=size, thumbnail_size=thumbnail_size)
         for att_name, att in extra_args.items():
             value = None
             if isinstance(att, (tuple, list)):
-                value = dict(itertools.zip_longest(params_size, att,
+                value = OrderedDict(itertools.zip_longest(params_size, att,
                                                    fillvalue=None))
 
             setattr(self, att_name, value)
